@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.5.1" type="plugin" group="user" method="upgrade">
+	<name>PLG_USER_MINIORANGEJOOMLANETWORKSECURITY</name>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+	<authorEmail>info@xecurify.com</authorEmail>
+	<authorUrl>www.miniorange.com</authorUrl>
+	<creationDate>October 2019</creationDate>
+	<copyright>Copyright 2019 miniOrange. All Rights Reserved.</copyright>
+	<license>GNU General Public License version 3</license>
+	<version>3.4</version>
+	<description>PLG_MINIORANGE_JOOMLA_NETWORK_XML_DESCRIPTION</description>
+
+	<files>
+		<filename plugin="miniorangejoomlanetworksecurity">miniorangejoomlanetworksecurity.php</filename>
+		<filename>index.html</filename>
+		<folder>language</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.plg_user_miniorangejoomlanetworksecurity.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.plg_user_miniorangejoomlanetworksecurity.sys.ini</language>
+	</languages>
+</extension>

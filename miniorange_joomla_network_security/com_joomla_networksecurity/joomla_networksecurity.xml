@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="3.5.1" method="upgrade">
+
+	<name>COM_JOOMLA_NETWORKSECURITY</name>
+	<!-- The following elements are optional and free of formatting constraints -->
+	<creationDate>October 2019</creationDate>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+	<authorEmail>info@xecurify.com</authorEmail>
+	<authorUrl>http://www.miniorange.com</authorUrl>
+	<copyright>2019 miniOrange</copyright>
+	<license>http://miniorange.com/usecases/miniOrange_User_Agreement.pdf</license>
+	<!--  The version string is recorded in the components table -->
+	<version>3.4</version>
+	<!-- The description is optional and defaults to the name -->
+	<description>This component is part of miniorange joomla network security extension</description>
+	<install> <!-- Runs on install -->
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+		</sql>
+	</install>
+	<update> <!-- Runs on update; New since J2.5 -->
+		<schemas>
+			<schemapath type="mysql">sql/updates/mysql</schemapath>
+		</schemas>
+	</update>
+	<uninstall> <!-- Runs on uninstall -->
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+		</sql>
+	</uninstall>
+
+	<administration>
+		<!-- Administration Menu Section -->
+		<menu link="index.php?option=com_joomla_networksecurity&amp;tab-panel=account_setup">COM_JOOMLA_NETWORKSECURITY_MENU</menu>
+		<submenu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=login_security" alt="Web Security Lite/Login Security">COM_JOOMLANETWORKSECURITY_TAB2_LOGIN_SECURITY</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=register_security" alt="Web Security Lite/Register Security">COM_JOOMLANETWORKSECURITY_TAB4_IP_REGISTER_SECURITY</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=ip_blocking" alt="Web Security Lite/IP Blocking">COM_JOOMLANETWORKSECURITY_TAB3_IP_BLOCKING</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=ip_reports" alt="Web Security Lite/IP Reports">COM_JOOMLANETWORKSECURITY_TAB3_IP_REPORTS</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=advanced_ip_blocking" alt="Web Security Lite/Advance Blocking">COM_JOOMLANETWORKSECURITY_TAB5_ADVANCED_BLOCKING</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=db_backup" alt="Web Security Lite/DB Backup">COM_JOOMLANETWORKSECURITY_TAB6_DB_BACKUP</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=email_notifications" alt="Web Security Lite/Notification">COM_JOOMLANETWORKSECURITY_TAB7_NOTIFICATIONS</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=advanced_features" alt="Web Security Lite/Advanced Features">COM_JOOMLANETWORKSECURITY_TAB8_ADVANCED_FEATURES</menu>
+			<menu link="option=com_joomla_networksecurity&amp;tab=account_setup" alt="Web Security Lite/Account Setup">COM_JOOMLANETWORKSECURITY_TAB1_ACCOUNT_SETUP</menu>
+		</submenu>
+
+		<files folder="admin">
+			<filename>index.html</filename>
+			<filename>joomla_networksecurity.php</filename>
+			<filename>controller.php</filename>
+			<folder>assets</folder>
+			<folder>helpers</folder>
+			<folder>sql</folder>
+			<folder>views</folder>
+			<folder>controllers</folder>
+		</files>
+		<languages folder="admin/language">
+			<language tag="en-GB">en-GB/en-GB.com_joomla_networksecurity.ini</language>
+			<language tag="en-GB">en-GB/en-GB.com_joomla_networksecurity.sys.ini</language>
+		</languages>
+	</administration>
+	<updateservers>
+		<server type="extension" priority="1" name="websecurity">https://miniorange.com/joomla_security_plugin_update.xml</server>
+	</updateservers>
+</extension>

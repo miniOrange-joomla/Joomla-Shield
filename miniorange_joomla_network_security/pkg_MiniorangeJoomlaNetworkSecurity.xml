@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.5.1" type="package" method="upgrade">
+	<name>PKG_MINIORANGEJOOMLANETWORKSECURITY_NAME</name>
+	<packagename>MiniorangeJoomlaNetworkSecurity</packagename>
+	<version>3.4</version>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+	<authorEmail>info@xecurify.com</authorEmail>
+	<license>GNU General Public License version 3</license>
+	<creationDate>October 2019</creationDate>
+	<description></description>
+	<scriptfile>pkg_script.php</scriptfile>
+	<files>
+		<file type="library" id="zminiorangejoomlanetworksecurityplugin">lib_zminiorangejoomlanetworksecurityplugin.zip</file>
+		<file type="component" id="joomla_networksecurity" >com_joomla_networksecurity.zip</file>
+		<file type="plugin" id="miniorangejoomlanetworksecurity" group="user">plg_user_miniorangejoomlanetworksecurity.zip</file>
+		<file type="plugin" id="miniorangenetworksecurity" group="authentication">plg_authentication_miniorangenetworksecurity.zip</file>
+		<file type="plugin" id="jnspredirect" group="system">plg_system_jnspredirect.zip</file>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.pkg_miniorangejoomlanetworksecurity.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.pkg_miniorangejoomlanetworksecurity.sys.ini</language>
+	</languages>
+	<updateservers>
+		<server type="extension" priority="1" name="websecurity">https://miniorange.com/joomla_security_plugin_update.xml</server>
+	</updateservers>
+</extension>

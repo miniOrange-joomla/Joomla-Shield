@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.0" type="plugin" group="authentication" method="upgrade">
+	<name>PLG_AUTHENTICATION_MINIORANGENETWORKSECURITY</name>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+	<authorEmail>info@xecurify.com</authorEmail>
+	<authorUrl>www.miniorange.com</authorUrl>
+	<creationDate>October 2019</creationDate>
+	<copyright>Copyright 2019 miniOrange. All Rights Reserved.</copyright>
+	<license>GNU General Public License version 3</license>
+	<version>3.4</version>
+	<description>PLG_MINIORANGENETWORKSECURITY_DESCRIPTION</description>
+
+	<files>
+		<filename plugin="miniorangenetworksecurity">miniorangenetworksecurity.php</filename>
+		<filename plugin="miniorangenetworksecurity">change-password.php</filename>
+		<folder>media</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.plg_authentication_miniorangenetworksecurity.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.plg_authentication_miniorangenetworksecurity.sys.ini</language>
+	</languages>
+</extension>

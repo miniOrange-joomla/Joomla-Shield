@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="library" version="3.5.1" method="upgrade">
+    <name>LIB_MINIORANGEJOOMLANETWORKSECURITYPLUGIN_NAME</name>
+    <libraryname>zminiorangejoomlanetworksecurityplugin</libraryname>
+    <author>miniOrange Security Software Pvt. Ltd.</author>
+	<authorEmail>info@xecurify.com</authorEmail>
+	<authorUrl>www.miniorange.com</authorUrl>
+    <creationDate>October 2019</creationDate>
+    <copyright>Copyright 2019 miniOrange. All Rights Reserved.</copyright>
+    <license>GNU General Public License version 3</license>
+    <version>3.4</version>
+    <description>LIB_MINIORANGEJOOMLANETWORKSECURITYPLUGIN_XML_DESCRIPTION</description>
+    <files>
+        <folder>utility</folder>
+    </files>
+    <languages>
+        <language tag="en-GB">language/en-GB/en-GB.lib_zminiorangejoomlanetworksecurityplugin.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.lib_zminiorangejoomlanetworksecurityplugin.sys.ini</language>
+    </languages>
+</extension>
