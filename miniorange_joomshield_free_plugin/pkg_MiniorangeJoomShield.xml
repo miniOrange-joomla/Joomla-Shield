@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="4.0.0" type="package" method="upgrade">
+	<name>Package - miniOrange JoomShield</name>
+	<packagename>MiniorangeJoomShield</packagename>
+	<version>1.0.2</version>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+    <authorEmail>info@xecurify.com</authorEmail>
+    <authorUrl>https://www.miniorange.com/</authorUrl>
+    <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
+    <license>GNU General Public License version 3; see LICENSE.txt</license>
+	<creationDate>November 2025</creationDate>
+	<description>Package for miniOrange JoomShield for Joomla.</description>
+	<scriptfile>pkg_script.php</scriptfile>
+	<files>
+		<file type="library" id="miniorangejoomshieldplugin">lib_miniorangejoomshieldplugin.zip</file>
+		<file type="component" id="joomshield" >com_joomshield.zip</file>
+		<file type="plugin" id="miniorangejoomshield" group="user">plg_user_miniorangejoomshield.zip</file>
+		<file type="plugin" id="miniorangeshield" group="authentication">plg_authentication_miniorangeshield.zip</file>
+		<file type="plugin" id="jsminiorange" group="system">plg_system_jsminiorange.zip</file>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.pkg_miniorangejoomshield.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.pkg_miniorangejoomshield.sys.ini</language>
+	</languages>
+	<updateservers>
+		<server type="extension" priority="1" name="websecurity">https://plugins.miniorange.com/joomla-web-security</server>
+	</updateservers>
+</extension>

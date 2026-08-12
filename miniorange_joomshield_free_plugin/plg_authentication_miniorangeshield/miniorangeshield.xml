@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="4.0.0" type="plugin" group="authentication" method="upgrade">
+	<name>PLG_AUTHENTICATION_MINIORANGESHIELD</name>
+	<author>miniOrange Security Software Pvt. Ltd.</author>
+    <authorEmail>info@xecurify.com</authorEmail>
+    <authorUrl>https://www.miniorange.com/</authorUrl>
+    <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
+    <license>GNU General Public License version 3; see LICENSE.txt</license>
+	<creationDate>November 2025</creationDate>
+	<version>1.0.2</version>
+	<description>PLG_MINIORANGESHIELD_DESCRIPTION</description>
+
+	<files>
+		<filename plugin="miniorangeshield">miniorangeshield.php</filename>
+		<folder>includes</folder>
+		<folder>media</folder>
+	</files>
+    <scriptfile>my_script.php</scriptfile>
+	<languages>
+		<language tag="en-GB">language/en-GB/en-GB.plg_authentication_miniorangeshield.ini</language>
+		<language tag="en-GB">language/en-GB/en-GB.plg_authentication_miniorangeshield.sys.ini</language>
+	</languages>
+</extension>

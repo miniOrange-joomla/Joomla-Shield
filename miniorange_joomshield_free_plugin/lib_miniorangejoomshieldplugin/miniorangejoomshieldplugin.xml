@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="library" version="4.0.0" method="upgrade">
+    <name>LIB_MINIORANGEJOOMSHIELDPLUGIN_NAME</name>
+    <libraryname>miniorangejoomshieldplugin</libraryname>
+    <author>miniOrange Security Software Pvt. Ltd.</author>
+    <authorEmail>info@xecurify.com</authorEmail>
+    <authorUrl>https://www.miniorange.com/</authorUrl>
+    <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
+    <license>GNU General Public License version 3; see LICENSE.txt</license>
+    <creationDate>November 2025</creationDate>
+    <version>1.0.2</version>
+    <description>LIB_MINIORANGEJOOMSHIELDPLUGIN_XML_DESCRIPTION</description>
+    <files>
+        <folder>utility</folder>
+    </files>
+    <languages>
+        <language tag="en-GB">language/en-GB/en-GB.lib_miniorangejoomshieldplugin.ini</language>
+        <language tag="en-GB">language/en-GB/en-GB.lib_miniorangejoomshieldplugin.sys.ini</language>
+    </languages>
+</extension>
