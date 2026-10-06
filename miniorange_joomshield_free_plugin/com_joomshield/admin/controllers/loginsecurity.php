@@ -16,12 +16,15 @@ use Joomla\CMS\Factory;
 
 defined('_JEXEC') or die('Restricted access');
 
+jimport('miniorangejoomshieldplugin.utility.JoomShieldUtilities');
+
 class JoomshieldControllerLoginSecurity extends FormController
 {
 	private const TAB_CLASS_NAMES = [
 		'login_security'    => 'Mo_Login_Security',
 		'register-security' => 'Mo_Register_Security',
 		'advance_blocking'  => 'Mo_Advance_Blocking',
+		'site_protection'   => 'Mo_Site_Protection',
 	];
 
 	public function __construct($config = [], $factory = null, $app = null, $input = null)
@@ -35,9 +38,24 @@ class JoomshieldControllerLoginSecurity extends FormController
 	{
 		$post = Factory::getApplication()->input->post->getArray();
 
+		$this->checkToken();
+
 		if (empty($post))
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=login_security', Text::_('COM_JOOMSHIELD_PLEASE_ENABLE_THE_CHECKBOX'), 'warning');
+
+			return;
+		}
+
+		$featureKey = isset($post['mo_customize_admin_url']) ? 'custom_admin_url' : 'login_password_policy';
+		$redirectTab = isset($post['mo_customize_admin_url']) ? 'admin_security' : 'login_security';
+		$lockError = JoomShieldFeatureLock::assertAllowed($featureKey);
+
+		if ($lockError !== '')
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=' . $redirectTab, $lockError, 'error');
+
+			return;
 		}
 
 		$db    = Factory::getDbo();
@@ -46,7 +64,20 @@ class JoomshieldControllerLoginSecurity extends FormController
 		if (isset($post['mo_customize_admin_url']))
 		{
 			$isAdminLoginEnable = $post['enable_custom_admin_login'] ?? 0;
-			$accessLgnKy        = $post['access_lgn_urlky'] ?? '';
+			$accessLgnKy        = (string) preg_replace('/\s+/', '', (string) ($post['access_lgn_urlky'] ?? ''));
+			$accessKeyLength    = function_exists('mb_strlen') ? mb_strlen($accessLgnKy, 'UTF-8') : strlen($accessLgnKy);
+
+			if ($accessKeyLength > 20)
+			{
+				$this->setRedirect(
+					'index.php?option=com_joomshield&tab=admin_security',
+					Text::_('COM_JOOMSHIELD_ACCESS_KEY_MAX_LENGTH'),
+					'error'
+				);
+
+				return;
+			}
+
 			$afterFailure       = $post['after_adm_failure_response'] ?? '';
 			$customDestination  = $post['custom_failure_destination'] ?? '';
 			$customErrMessage   = $post['custom_message_after_fail'] ?? '';
@@ -84,17 +115,23 @@ class JoomshieldControllerLoginSecurity extends FormController
 		$db->setQuery($query);
 		$db->execute();
 
-		$this->setRedirect('index.php?option=com_joomshield&tab=login_security', $msg);
+		$this->setRedirect('index.php?option=com_joomshield&tab=' . $redirectTab, $msg);
 	}
 
 	public function importExport($jsonInString = false)
 	{
+		if (!$jsonInString)
+		{
+			$this->checkToken();
+		}
+
 		include_once JPATH_COMPONENT_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'export.php';
 
 		$tabNames = [
 			'login_security'    => '#__miniorange_jnsp_loginsecurity_setup',
 			'register-security' => '#__miniorange_jnsp_registersecurity_setup',
 			'advance_blocking'  => '#__miniorange_jnsp_advance_blocking',
+			'site_protection'   => '#__miniorange_jnsp_site_protection',
 		];
 
 		$customerResult = [];
@@ -102,6 +139,12 @@ class JoomshieldControllerLoginSecurity extends FormController
 		foreach ($tabNames as $key => $value)
 		{
 			$customerResult[$key] = JoomShieldUtilities::isNetworkRegistered($value);
+		}
+
+		if (isset($customerResult['site_protection']) && is_array($customerResult['site_protection']))
+		{
+			unset($customerResult['site_protection']['admin_http_hash']);
+			unset($customerResult['site_protection']['feature_lock_hash']);
 		}
 
 		$loginSecurity    = $customerResult['login_security'];
@@ -151,6 +194,17 @@ class JoomshieldControllerLoginSecurity extends FormController
 
 	public function import()
 	{
+		$this->checkToken();
+
+		$lockError = JoomShieldFeatureLock::assertAllowed('import_configuration');
+
+		if ($lockError !== '')
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=import_export', $lockError, 'error');
+
+			return;
+		}
+
 		$file = $this->input->files->get('configuration_file', null, 'array');
 
 		if ($file === null || empty($file['name']))
@@ -163,15 +217,23 @@ class JoomshieldControllerLoginSecurity extends FormController
 		$tmpName = $file['tmp_name'] ?? '';
 		$error   = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
 
-		if ($tmpName === '' || $error !== UPLOAD_ERR_OK || !is_uploaded_file($tmpName))
+		if (!is_string($tmpName) || $tmpName === '' || $error !== UPLOAD_ERR_OK)
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=import_export', Text::_('COM_JOOMSHIELD_UPLOAD_FAILED_OR_INVALID_FILE'), 'error');
 
 			return;
 		}
 
-		$string = @file_get_contents($tmpName);
-		$json   = json_decode((string) $string, true);
+		$string = $this->readUploadedConfiguration($tmpName);
+
+		if ($string === false)
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=import_export', Text::_('COM_JOOMSHIELD_UPLOAD_FAILED_OR_INVALID_FILE'), 'error');
+
+			return;
+		}
+
+		$json = json_decode((string) $string, true);
 
 		if (!is_array($json))
 		{
@@ -195,8 +257,18 @@ class JoomshieldControllerLoginSecurity extends FormController
 			$fields = [];
 			$varEnter = 0;
 
+			if (empty($configurationArray[$tabName]) || !is_array($configurationArray[$tabName]))
+			{
+				continue;
+			}
+
 			foreach ($configurationArray[$tabName] as $key => $value)
 			{
+				if (in_array($key, ['admin_http_hash', 'feature_lock_hash', 'feature_lock_enabled', 'feature_lock_items'], true))
+				{
+					continue;
+				}
+
 				$varEnter   = 1;
 				$fields[] = $db->quoteName($key) . ' = ' . $db->quote($value);
 			}
@@ -227,6 +299,16 @@ class JoomshieldControllerLoginSecurity extends FormController
 					$db->quoteName('id') . ' = 1',
 				];
 				$query->update($db->quoteName('#__miniorange_jnsp_advance_blocking'))->set($fields)->where($conditions);
+				$db->setQuery($query);
+				$db->execute();
+			}
+
+			if ($className === 'Mo_Site_Protection' && $varEnter === 1)
+			{
+				$conditions = [
+					$db->quoteName('id') . ' = 1',
+				];
+				$query->update($db->quoteName('#__miniorange_jnsp_site_protection'))->set($fields)->where($conditions);
 				$db->setQuery($query);
 				$db->execute();
 			}
@@ -327,5 +409,150 @@ class JoomshieldControllerLoginSecurity extends FormController
                     <div>' . Text::_('COM_JOOMSHIELD_SHOWING') . ' ' . $firstVal . ' - ' . $lastVal . ' ' . Text::_('COM_JOOMSHIELD_OF') . ' ' . $totalEntries . ' ' . Text::_('COM_JOOMSHIELD_ENTRIES') . ' (max 20 stored)</div>';
 		echo $result;
 		exit;
+	}
+
+	private function readUploadedConfiguration($tmpName)
+	{
+		if (!is_string($tmpName) || $tmpName === '' || strpos($tmpName, "\0") !== false || strpos($tmpName, '://') !== false)
+		{
+			return false;
+		}
+
+		$normalizedInput = str_replace('\\', '/', $tmpName);
+
+		if (preg_match('#(^|/)\.\.(/|$)#', $normalizedInput) === 1 || !is_uploaded_file($tmpName))
+		{
+			return false;
+		}
+
+		$uploadedPath = realpath($tmpName);
+
+		if ($uploadedPath === false || !is_file($uploadedPath))
+		{
+			return false;
+		}
+
+		foreach ($this->getAllowedUploadDirectories() as $directory)
+		{
+			$relative = $this->relativePathInsideDirectory($uploadedPath, $directory);
+
+			if ($relative === '' || strpos($relative, '..') !== false || strpos($relative, ':') !== false || strpos($relative, "\0") !== false)
+			{
+				continue;
+			}
+
+			$safePath  = $directory . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+			$confirmed = realpath($safePath);
+
+			if ($confirmed === false || !is_file($confirmed) || !$this->pathsAreSame($confirmed, $uploadedPath))
+			{
+				continue;
+			}
+
+			if ($this->relativePathInsideDirectory($confirmed, $directory) === '')
+			{
+				continue;
+			}
+
+			$contents = file_get_contents($confirmed);
+
+			if ($contents === false)
+			{
+				return false;
+			}
+
+			return $contents;
+		}
+
+		return false;
+	}
+
+	private function getAllowedUploadDirectories()
+	{
+		$candidates   = [];
+		$uploadTmpDir = ini_get('upload_tmp_dir');
+
+		if (is_string($uploadTmpDir) && trim($uploadTmpDir) !== '')
+		{
+			$candidates[] = $uploadTmpDir;
+		}
+
+		$systemTmp = sys_get_temp_dir();
+
+		if (is_string($systemTmp) && $systemTmp !== '')
+		{
+			$candidates[] = $systemTmp;
+		}
+
+		$directories = [];
+
+		foreach ($candidates as $candidate)
+		{
+			$resolved = realpath($candidate);
+
+			if (!is_string($resolved) || $resolved === '' || !is_dir($resolved))
+			{
+				continue;
+			}
+
+			$resolved = rtrim($resolved, '/\\');
+
+			if (!$this->isUsableTempDirectory($resolved) || in_array($resolved, $directories, true))
+			{
+				continue;
+			}
+
+			$directories[] = $resolved;
+		}
+
+		return $directories;
+	}
+
+	private function isUsableTempDirectory($path)
+	{
+		$normalized = rtrim(str_replace('\\', '/', (string) $path), '/');
+
+		if ($normalized === '' || $normalized === '.')
+		{
+			return false;
+		}
+
+		return preg_match('/^[A-Za-z]:$/', $normalized) !== 1;
+	}
+
+	private function relativePathInsideDirectory($path, $directory)
+	{
+		$normalizedPath = str_replace('\\', '/', $path);
+		$normalizedDir  = rtrim(str_replace('\\', '/', $directory), '/');
+		$prefix         = $normalizedDir . '/';
+
+		if (DIRECTORY_SEPARATOR === '\\')
+		{
+			$isInside = stripos($normalizedPath, $prefix) === 0;
+		}
+		else
+		{
+			$isInside = strpos($normalizedPath, $prefix) === 0;
+		}
+
+		if (!$isInside)
+		{
+			return '';
+		}
+
+		return substr($normalizedPath, strlen($prefix));
+	}
+
+	private function pathsAreSame($left, $right)
+	{
+		$left  = str_replace('\\', '/', $left);
+		$right = str_replace('\\', '/', $right);
+
+		if (DIRECTORY_SEPARATOR === '\\')
+		{
+			return strcasecmp($left, $right) === 0;
+		}
+
+		return $left === $right;
 	}
 }

@@ -32,6 +32,8 @@ class PlgAuthenticationMiniorangeShieldInstallerScript
 		$query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
 		$db->setQuery($query);
 		$db->execute();
+
+		$this->prioritiseAuthenticationPlugin($db);
 	}
 
 	/**
@@ -86,6 +88,21 @@ class PlgAuthenticationMiniorangeShieldInstallerScript
 	 */
 	public function postflight($type, $parent)
 	{
-		// Echo '<p>' . Text::_('COM_HELLOWORLD_POSTFLIGHT_' . $type . '_TEXT') . '</p>';
+		if ($type === 'install' || $type === 'update')
+		{
+			$this->prioritiseAuthenticationPlugin(Factory::getDbo());
+		}
+	}
+
+	private function prioritiseAuthenticationPlugin($db)
+	{
+		$query = $db->getQuery(true)
+			->update($db->quoteName('#__extensions'))
+			->set($db->quoteName('ordering') . ' = -10')
+			->where($db->quoteName('element') . ' = ' . $db->quote('miniorangeshield'))
+			->where($db->quoteName('folder') . ' = ' . $db->quote('authentication'))
+			->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
+		$db->setQuery($query);
+		$db->execute();
 	}
 }

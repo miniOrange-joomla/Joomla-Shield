@@ -2,7 +2,7 @@
 <extension version="4.0.0" type="package" method="upgrade">
 	<name>Package - miniOrange JoomShield</name>
 	<packagename>MiniorangeJoomShield</packagename>
-	<version>1.0.2</version>
+	<version>1.0.4</version>
 	<author>miniOrange Security Software Pvt. Ltd.</author>
     <authorEmail>info@xecurify.com</authorEmail>
     <authorUrl>https://www.miniorange.com/</authorUrl>

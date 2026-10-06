@@ -10,6 +10,7 @@
  * @contact   info@xecurify.com
  */
 
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -32,7 +33,7 @@ class RegisterSecurity
 		?>
 		<div class="mo_boot_col-sm-12">
 			<form name="mo_register_security" method="post" action="<?php echo Route::_('index.php?option=com_joomshield&task=registersecurity.saveRegisterSecuritySettings'); ?>">
-
+				<?php echo HTMLHelper::_('form.token'); ?>
 				<input type="hidden" name="mo_block_fake_registration" value="block_fake_registration" id="block_fake_registration_id">
 				<div class="mo_boot_row">
 					<div class="mo_boot-col-sm-12 mo_boot_mt-3">
@@ -48,9 +49,12 @@ class RegisterSecurity
 
 				<div class="mo_boot_row"><br></div>
 				<div class="mo_boot_row">
-					<div class="mo_boot_col-sm-5"><?php echo Text::_('COM_JOOMSHIELD_ENTER_EMAIL_DOMAINS_YOU_WANT_TO_BLOCK'); ?></div>
+					<div class="mo_boot_col-sm-5">
+						<?php echo Text::_('COM_JOOMSHIELD_ENTER_EMAIL_DOMAINS_YOU_WANT_TO_BLOCK'); ?>
+						<span id="mo_email_domains_required" class="mo_js_required_marker" <?php echo (int) $blockFakeEmails === 1 ? '' : 'hidden'; ?>>*</span>
+					</div>
 					<div class="mo_boot_col-sm-7">
-						<textarea rows="4" name="mo_email_domains" class="mo_boot_px-2 mo_enable_blk_email form-control mo_security_textfield" required
+						<textarea rows="4" name="mo_email_domains" class="mo_boot_px-2 mo_enable_blk_email form-control mo_security_textfield" <?php echo (int) $blockFakeEmails === 1 ? 'required' : 'disabled'; ?>
 							placeholder="<?php echo Text::_('COM_JOOMSHIELD_ENTER_SEMICOLON_SEPERATED_DOMAINS_PLACEHOLDER'); ?>"
 							oninput="nospaces(this,'Please enter the email domains without spaces.');"><?php echo htmlspecialchars($extraEmail, ENT_QUOTES, 'UTF-8'); ?></textarea>
 					</div>
@@ -65,7 +69,7 @@ class RegisterSecurity
 			</form>
 
 			<form name="mo_register_security" method="post" action="<?php echo Route::_('index.php?option=com_joomshield&task=registersecurity.saveRegisterSecuritySettings'); ?>">
-
+				<?php echo HTMLHelper::_('form.token'); ?>
 				<h3><?php echo Text::_('COM_JOOMSHIELD_ENFORCE_STRONG_PASSWORDS'); ?></h3>
 				<hr>
 				<div><?php echo Text::_('COM_JOOMSHIELD_ENFORCE_STRONG_PASSWORDS_NOTE'); ?></div>

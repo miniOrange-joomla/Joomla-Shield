@@ -1,31 +1,67 @@
-.intl-number-input { position: inherit; }
+.intl-number-input {
+	--mo-phone-arrow: #000000;
+	--mo-phone-list-bg: #ffffff;
+	--mo-phone-list-border: #cccccc;
+	--mo-phone-list-text: #333333;
+	--mo-phone-dial: #999999;
+	--mo-phone-hover: rgba(0, 0, 0, 0.05);
+	--mo-phone-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
+	position: inherit;
+}
+
 .intl-number-input .hide { display: none; }
 .intl-number-input .flag-dropdown { position: absolute; cursor: pointer; }
 .intl-number-input .flag-dropdown .selected-flag { margin: 1px; padding: 8px 16px 6px 7px; }
-.intl-number-input .flag-dropdown .selected-flag:hover { background-color: rgba(0, 0, 0, 0.05); }
-.intl-number-input .flag-dropdown .selected-flag .down-arrow { top: 5px; position: relative; left: 20px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid black; }
-.intl-number-input .flag-dropdown .country-list {list-style: none; padding: 0; margin: 0; z-index: 1; overflow-y: scroll; box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2); background-color: white; border: 1px solid #cccccc; position: absolute; top: 33px; width: 196px; height: 200px; font-size:12px; }
-.intl-number-input .flag-dropdown .country-list .divider { padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #cccccc; }
-.intl-number-input .flag-dropdown .country-list .country { line-height: 20px; padding: 4px 10px; }
-.intl-number-input .flag-dropdown .country-list .country .dial-code { color: #999999; }
-.intl-number-input .flag-dropdown .country-list .country.highlight { background-color: rgba(0, 0, 0, 0.05); }
+.intl-number-input .flag-dropdown .selected-flag:hover { background-color: var(--mo-phone-hover); }
+.intl-number-input .flag-dropdown .selected-flag .down-arrow {
+	top: 5px;
+	position: relative;
+	left: 20px;
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 4px solid var(--mo-phone-arrow);
+}
+.intl-number-input .flag-dropdown .country-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	z-index: 1;
+	overflow-y: scroll;
+	box-shadow: var(--mo-phone-shadow);
+	background-color: var(--mo-phone-list-bg);
+	border: 1px solid var(--mo-phone-list-border);
+	color: var(--mo-phone-list-text);
+	position: absolute;
+	top: 33px;
+	width: 196px;
+	height: 200px;
+	font-size: 12px;
+}
+.intl-number-input .flag-dropdown .country-list .divider { padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid var(--mo-phone-list-border); }
+.intl-number-input .flag-dropdown .country-list .country { line-height: 20px; padding: 4px 10px; color: var(--mo-phone-list-text); }
+.intl-number-input .flag-dropdown .country-list .country .country-name { color: var(--mo-phone-list-text); }
+.intl-number-input .flag-dropdown .country-list .country .dial-code { color: var(--mo-phone-dial); }
+.intl-number-input .flag-dropdown .country-list .country.highlight { background-color: var(--mo-phone-hover); }
 .intl-number-input .flag-dropdown .country-list .flag { display: inline-block; vertical-align: bottom; }
-.intl-number-input .flag-dropdown .country-list .flag, .intl-number-input .flag-dropdown .country-list .country-name { margin-right:2px; }
-#mo_jnsp_query_phone{
+.intl-number-input .flag-dropdown .country-list .flag, .intl-number-input .flag-dropdown .country-list .country-name { margin-right: 2px; }
+#mo_jnsp_query_phone,
+.mo_jnsp_query_phone {
 	display: inline-block;
-    height: 30px;
-    padding: 4px 6px;
-    margin-bottom: 9px;
-    font-size: 13px;
-    line-height: 30px;
-    color: #555;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px !important;
-    vertical-align: middle;
-    width: 100% !important;
-    box-sizing: border-box; -moz-box-sizing: border-box;
-    padding-left: 40px !important; }
+	height: 30px;
+	padding: 4px 6px;
+	font-size: 13px;
+	line-height: 30px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px !important;
+	vertical-align: middle;
+	width: 100% !important;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding-left: 40px !important;
+}
 
 /* originally from https://github.com/lafeber/world-flags-sprite */
 .f16 .flag { width: 16px; height: 16px; background: url("../images/flags16.png") no-repeat; }
@@ -275,11 +311,45 @@
 .f16 .zw { background-position: 0 -3888px; }
 
 .intl-number-input input {
-  border-radius: 0px !important;
-  box-sizing:border-box;
-  max-width: 100%;
+	border-radius: 0px !important;
+	box-sizing: border-box;
+	max-width: 100%;
 }
 
 .actions {
-  margin-top: 20px;
+	margin-top: 20px;
+}
+
+:root[data-color-scheme="dark"] .intl-number-input {
+	--mo-phone-arrow: #e4e6eb;
+	--mo-phone-list-bg: #0A0E13;
+	--mo-phone-list-border: #4f4f4f;
+	--mo-phone-list-text: #ffffff;
+	--mo-phone-dial: #a0a0a0;
+	--mo-phone-hover: #1A1F26;
+	--mo-phone-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-color-scheme="dark"] #mo_jnsp_query_phone,
+:root[data-color-scheme="dark"] .mo_jnsp_query_phone,
+:root[data-color-scheme="dark"] .intl-number-input input {
+	color: #e4e6eb;
+	background-color: #2b2f33;
+	border-color: #666 !important;
+}
+
+:root[data-color-scheme="dark"] #mo_jnsp_query_phone:focus,
+:root[data-color-scheme="dark"] .mo_jnsp_query_phone:focus,
+:root[data-color-scheme="dark"] .intl-number-input input:focus {
+	color: #ffffff;
+	background-color: #2b2f33;
+	border-color: #80bdff !important;
+	box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+:root[data-color-scheme="dark"] #mo_jnsp_query_phone::placeholder,
+:root[data-color-scheme="dark"] .mo_jnsp_query_phone::placeholder,
+:root[data-color-scheme="dark"] .intl-number-input input::placeholder {
+	color: #9da3aa;
+	opacity: 1;
 }

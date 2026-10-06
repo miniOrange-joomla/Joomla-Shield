@@ -31,6 +31,16 @@ class JoomshieldControllerMoIpBlocking extends FormController
 	{
 		$post = Factory::getApplication()->input->post->getArray();
 
+		$this->checkToken();
+		$lockError = JoomShieldFeatureLock::assertAllowed('ip_lookup');
+
+		if ($lockError !== '')
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=ip_blocking', $lockError, 'error');
+
+			return;
+		}
+
 		if (isset($post['clear_val']))
 		{
 			JoomShieldUtilities::clearIplookup();
@@ -141,6 +151,20 @@ class JoomshieldControllerMoIpBlocking extends FormController
 		$post = Factory::getApplication()->input->post->getArray();
 		$loginReport = JoomShieldUtilities::getAllLoginAttemptsCount();
 
+		$this->checkToken();
+
+		if (isset($post['clear_val']))
+		{
+			$lockError = JoomShieldFeatureLock::assertAllowed('clear_reports');
+
+			if ($lockError !== '')
+			{
+				$this->setRedirect('index.php?option=com_joomshield&tab=ip_reports', $lockError, 'error');
+
+				return;
+			}
+		}
+
 		if (isset($post['refresh_page']))
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=ip_reports', Text::_('COM_JOOMSHIELD_THE_LOGIN_REPORTS_HAS_BEEN_UPDATED_SUCCESSFULLY'));
@@ -148,21 +172,21 @@ class JoomshieldControllerMoIpBlocking extends FormController
 			return;
 		}
 
-		if (isset($post['download_reports']) && $loginReport != 0)
+		if (isset($post['download_reports']) && $loginReport !== 0)
 		{
 			JoomShieldUtilities::downloadReports();
 
 			return;
 		}
 
-		if (isset($post['download_reports']) && $loginReport == 0)
+		if (isset($post['download_reports']) && $loginReport === 0)
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=ip_reports', Text::_('COM_JOOMSHIELD_REPORT_IS_ALREADY_EMPTY'), 'error');
 
 			return;
 		}
 
-		if (isset($post['clear_val']) && $loginReport != 0)
+		if (isset($post['clear_val']) && $loginReport !== 0)
 		{
 			$db = Factory::getDbo();
 			$db->truncateTable('#__miniorange_login_transactions_reports');
@@ -171,7 +195,7 @@ class JoomshieldControllerMoIpBlocking extends FormController
 			return;
 		}
 
-		if (isset($post['clear_val']) && $loginReport == 0)
+		if (isset($post['clear_val']) && $loginReport === 0)
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=ip_reports', Text::_('COM_JOOMSHIELD_REPORT_IS_ALREADY_EMPTY'), 'error');
 
@@ -183,3 +207,4 @@ class JoomshieldControllerMoIpBlocking extends FormController
 		return;
 	}
 }
+

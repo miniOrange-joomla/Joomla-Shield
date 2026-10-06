@@ -11,6 +11,7 @@
  */
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
@@ -57,6 +58,7 @@ class AdvancedBlocking
 		<hr>
 		<form name="mo_jnsp_browser_blocking" method="post"
 			  action="<?php echo Route::_('index.php?option=com_joomshield&task=advanceipblocking.saveBrowserBlocking'); ?>">
+					<?php echo HTMLHelper::_('form.token'); ?>
 
 					<input type="checkbox" <?php echo $browserBlockingChecked; ?>
 						   class="mo_enable_brwoser_blocking checkbox_style" value="1" name="mo_enable_browser_blocking"
@@ -94,13 +96,13 @@ class AdvancedBlocking
 					<br>
 
 					<div class="mo_boot_row">
-						<div class="mo_boot_col-sm-7 mo_boot_offset-sm-5">
+						<div class="mo_boot_col-sm-12 mo_boot_text-center">
 							<input type="submit" name="submit" value="Save" class="mo_websecurity_btn">
 						</div>
 					</div>
 		</form><br><br>
 
-		<h3><?php echo Text::_('COM_JOOMSHIELD_IP_ADDRESS_RANGE_BLOCKING'); ?> <sup><a href='index.php?option=com_joomshield&tab=license_plans'><strong>( <?php echo Text::_('COM_JOOMSHIELD_PREMIUM_FEATURE'); ?> )</strong></a></sup></h3>
+		<h3><?php echo Text::_('COM_JOOMSHIELD_IP_ADDRESS_RANGE_BLOCKING'); ?> <sup class="mo_js_premium_crown"><a href="index.php?option=com_joomshield&tab=license_plans" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>"><img src="<?php echo Uri::base(); ?>components/com_joomshield/assets/images/premium_crown.png" alt="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>" class="mo_js_premium_crown_img"><span class="mo_js_premium_tooltip"><?php echo Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'); ?></span></a></sup></h3>
 		<hr>
 		<div><?php echo Text::_('COM_JOOMSHIELD_IP_ADDRESS_RANGE_BLOCKING_NOTE'); ?></div>
 		<br>
@@ -113,13 +115,13 @@ class AdvancedBlocking
 					<div class="mo_boot_col-sm-5">
 						<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS_RANGE'); ?>
 					</div>
-					<div class="mo_boot_col-sm-6">
-						<input class="form-control mo_security_textfield mo_boot_form-control" name="ip_address_range_blocking"
+					<div class="mo_boot_col-sm-7">
+						<input class="mo_boot_form-control" name="ip_address_range_blocking"
 							   type="text" placeholder="IP address range" disabled />
 					</div>
 				</div><br>
 				<div class="mo_boot_row">
-					<div class="mo_boot_col-sm-7 mo_boot_offset-sm-5">
+					<div class="mo_boot_col-sm-12 mo_boot_text-center">
 						<input type="submit" name="submit" class="mo_websecurity_btn" value="Block" disabled>
 					</div>
 				</div><br>
@@ -140,12 +142,12 @@ class AdvancedBlocking
 			</div>
 		</form><br><br>
 
-		<h3><?php echo Text::_('COM_JOOMSHIELD_COUNTRY_BLOCKING'); ?> <sup><a href="index.php?option=com_joomshield&tab=license_plans"><strong>( <?php echo Text::_('COM_JOOMSHIELD_PREMIUM_FEATURE'); ?> )</strong></a></sup></h3>
+		<h3><?php echo Text::_('COM_JOOMSHIELD_COUNTRY_BLOCKING'); ?> <sup class="mo_js_premium_crown"><a href="index.php?option=com_joomshield&tab=license_plans" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>"><img src="<?php echo Uri::base(); ?>components/com_joomshield/assets/images/premium_crown.png" alt="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>" class="mo_js_premium_crown_img"><span class="mo_js_premium_tooltip"><?php echo Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'); ?></span></a></sup></h3>
 		<hr>
 		<p><?php echo Text::_('COM_JOOMSHIELD_SELECT_COUNTRIES_FROM_BELOW'); ?></p>
 		<form name="mo_jnsp_country_blocking" method="post" id="countryblockingform">
 			<div class="mo_boot_row">
-				<div class="mo_boot_col-sm-8">
+				<div class="mo_boot_col-sm-12 mo_boot_px-0 ">
 					<div class="mo_country_multiselect" id="mo_country_multiselect">
 						<div class="mo_country_multiselect_trigger mo_boot_form-control" id="mo_country_multiselect_trigger" tabindex="0">
 							<span class="mo_country_multiselect_placeholder" id="mo_country_multiselect_label"><?php echo Text::_('COM_JOOMSHIELD_SELECT_COUNTRIES_PLACEHOLDER'); ?></span>
@@ -169,7 +171,7 @@ class AdvancedBlocking
 			</div>
 			<br>
 			<div class="mo_boot_row">
-				<div class="mo_boot_col-sm-7 mo_boot_offset-sm-5">
+				<div class="mo_boot_col-sm-12 mo_boot_text-center">
 					<input type="submit" class="mo_websecurity_btn" value="Save" disabled>
 				</div>
 			</div>

@@ -16,16 +16,9 @@ defined('_JEXEC') or die('Restricted access');
 
 class PlgSystemJsminiorangeInstallerScript
 {
-	/**
-	 * This method is called after a plugin is installed.
-	 *
-	 * @param \stdClass $parent - Parent object calling this method.
-	 *
-	 * @return void
-	 */
 	public function install($parent)
 	{
-		$db  = Factory::getDbo();
+		$db = Factory::getDbo();
 		$query = $db->getQuery(true);
 		$query->update('#__extensions');
 		$query->set($db->quoteName('enabled') . ' = 1');
@@ -33,60 +26,192 @@ class PlgSystemJsminiorangeInstallerScript
 		$query->where($db->quoteName('type') . ' = ' . $db->quote('plugin'));
 		$db->setQuery($query);
 		$db->execute();
+
+		$this->ensureJoomShieldSchema($db);
 	}
 
-	/**
-	 * This method is called after a component is uninstalled.
-	 *
-	 * @param \stdClass $parent - Parent object calling this method.
-	 *
-	 * @return void
-	 */
 	public function uninstall($parent)
 	{
-		// Echo '<p>' . Text::_('COM_HELLOWORLD_UNINSTALL_TEXT') . '</p>';
+		$db = Factory::getDbo();
+		$this->cleanupServerRules();
+		$this->expireTemporaryUsers($db);
 	}
 
-	/**
-	 * This method is called after a component is updated.
-	 *
-	 * @param \stdClass $parent - Parent object calling object.
-	 *
-	 * @return void
-	 */
 	public function update($parent)
 	{
-		// Echo '<p>' . Text::sprintf('COM_HELLOWORLD_UPDATE_TEXT', $parent->get('manifest')->version) . '</p>';
+		$this->ensureJoomShieldSchema(Factory::getDbo());
 	}
 
-	/**
-	 * Runs just before any installation action is performed on the component.
-	 * Verifications and pre-requisites should run in this function.
-	 *
-	 * @param string    $type   - Type of PreFlight action. Possible values are:
-	 *                          - * install - * update - * discover_install- * install - * update - * discover_install
-	 *
-	 * @param \stdClass $parent - Parent object calling object.
-	 *
-	 * @return void
-	 */
 	public function preflight($type, $parent)
 	{
-		// Echo '<p>' . Text::_('COM_HELLOWORLD_PREFLIGHT_' . $type . '_TEXT') . '</p>';
 	}
 
-	/**
-	 * Runs right after any installation action is performed on the component.
-	 *
-	 * @param string    $type   - Type of PostFlight action. Possible values are:
-	 *                          - * install - * update - * discover_install- * install - * update - * discover_install
-	 *
-	 * @param \stdClass $parent - Parent object calling object.
-	 *
-	 * @return void
-	 */
 	public function postflight($type, $parent)
 	{
-		// Echo '<p>' . Text::_('COM_HELLOWORLD_POSTFLIGHT_' . $type . '_TEXT') . '</p>';
+		if ($type === 'install' || $type === 'update')
+		{
+			$this->ensureJoomShieldSchema(Factory::getDbo());
+		}
+	}
+
+	private function ensureJoomShieldSchema($db)
+	{
+		$db->setQuery(
+			"CREATE TABLE IF NOT EXISTS `#__miniorange_jnsp_site_protection` (
+				`id` int(11) UNSIGNED NOT NULL,
+				`emergency_offline` tinyint(1) DEFAULT 0,
+				`offline_whitelist_ips` text,
+				`admin_http_auth` tinyint(1) DEFAULT 0,
+				`admin_http_user` VARCHAR(255) DEFAULT '',
+				`admin_http_hash` VARCHAR(255) DEFAULT '',
+				`admin_http_whitelist_ips` text,
+				`feature_lock_enabled` tinyint(1) DEFAULT 0,
+				`feature_lock_hash` VARCHAR(255) DEFAULT '',
+				`feature_lock_items` text,
+				`server_rules_apache` tinyint(1) DEFAULT 0,
+				`link_migration_live` tinyint(1) DEFAULT 0,
+				`link_migration_old_hosts` text,
+				PRIMARY KEY(`id`)
+			) DEFAULT COLLATE=utf8_general_ci"
+		);
+		$db->execute();
+
+		$db->setQuery(
+			"CREATE TABLE IF NOT EXISTS `#__miniorange_jnsp_temp_users` (
+				`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+				`user_id` int(11) UNSIGNED NOT NULL,
+				`created_by` int(11) UNSIGNED NOT NULL DEFAULT 0,
+				`expires_at` datetime NOT NULL,
+				`status` VARCHAR(32) NOT NULL DEFAULT 'active',
+				`created_at` datetime NOT NULL,
+				PRIMARY KEY (`id`)
+			) DEFAULT COLLATE=utf8_general_ci"
+		);
+		$db->execute();
+
+		$columns = [
+			'emergency_offline' => 'tinyint(1) DEFAULT 0',
+			'offline_whitelist_ips' => 'text',
+			'admin_http_auth' => 'tinyint(1) DEFAULT 0',
+			'admin_http_user' => "VARCHAR(255) DEFAULT ''",
+			'admin_http_hash' => "VARCHAR(255) DEFAULT ''",
+			'admin_http_whitelist_ips' => 'text',
+			'feature_lock_enabled' => 'tinyint(1) DEFAULT 0',
+			'feature_lock_hash' => "VARCHAR(255) DEFAULT ''",
+			'feature_lock_items' => 'text',
+			'server_rules_apache' => 'tinyint(1) DEFAULT 0',
+			'link_migration_live' => 'tinyint(1) DEFAULT 0',
+			'link_migration_old_hosts' => 'text',
+		];
+
+		foreach ($columns as $column => $definition)
+		{
+			$this->ensureColumn($db, '#__miniorange_jnsp_site_protection', $column, $definition);
+		}
+
+		$query = $db->getQuery(true)
+			->select('COUNT(*)')
+			->from($db->quoteName('#__miniorange_jnsp_site_protection'))
+			->where($db->quoteName('id') . ' = 1');
+		$db->setQuery($query);
+
+		if ((int) $db->loadResult() === 0)
+		{
+			$insert = $db->getQuery(true)
+				->insert($db->quoteName('#__miniorange_jnsp_site_protection'))
+				->columns($db->quoteName('id'))
+				->values('1');
+			$db->setQuery($insert);
+			$db->execute();
+		}
+	}
+
+	private function ensureColumn($db, $table, $column, $definition)
+	{
+		try
+		{
+			$fields = $db->getTableColumns($table);
+		}
+		catch (\Throwable $e)
+		{
+			return;
+		}
+
+		if (isset($fields[$column]))
+		{
+			return;
+		}
+
+		$db->setQuery(
+			'ALTER TABLE ' . $db->quoteName($table)
+			. ' ADD ' . $db->quoteName($column) . ' ' . $definition
+		);
+		$db->execute();
+	}
+
+	private function cleanupServerRules()
+	{
+		$htaccess = JPATH_ROOT . DIRECTORY_SEPARATOR . '.htaccess';
+
+		if (is_file($htaccess) && is_readable($htaccess) && is_writable($htaccess))
+		{
+			$contents = (string) file_get_contents($htaccess);
+			$pattern = '/# BEGIN miniOrange JoomShield.*?# END miniOrange JoomShield\s*/s';
+			$updated = preg_replace($pattern, '', $contents);
+
+			if ($updated !== null && $updated !== $contents)
+			{
+				file_put_contents($htaccess, $updated);
+			}
+		}
+
+		$passwd = JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . '.joomshield_passwd';
+
+		if (is_file($passwd))
+		{
+			@unlink($passwd);
+		}
+	}
+
+	private function expireTemporaryUsers($db)
+	{
+		try
+		{
+			$tables = $db->getTableList();
+			$tempTable = $db->replacePrefix('#__miniorange_jnsp_temp_users');
+
+			if (!in_array($tempTable, $tables, true))
+			{
+				return;
+			}
+
+			$query = $db->getQuery(true)
+				->select($db->quoteName('user_id'))
+				->from($db->quoteName('#__miniorange_jnsp_temp_users'))
+				->where($db->quoteName('status') . ' = ' . $db->quote('active'));
+			$db->setQuery($query);
+			$userIds = $db->loadColumn();
+
+			if (!empty($userIds))
+			{
+				$updateUsers = $db->getQuery(true)
+					->update($db->quoteName('#__users'))
+					->set($db->quoteName('block') . ' = 1')
+					->where($db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $userIds)) . ')');
+				$db->setQuery($updateUsers);
+				$db->execute();
+			}
+
+			$updateTemp = $db->getQuery(true)
+				->update($db->quoteName('#__miniorange_jnsp_temp_users'))
+				->set($db->quoteName('status') . ' = ' . $db->quote('revoked'))
+				->where($db->quoteName('status') . ' = ' . $db->quote('active'));
+			$db->setQuery($updateTemp);
+			$db->execute();
+		}
+		catch (\Throwable $e)
+		{
+			return;
+		}
 	}
 }

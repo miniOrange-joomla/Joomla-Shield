@@ -36,3 +36,17 @@ class Mo_Advance_Blocking extends BasicEnum
 	const MO_ENABLE_BROWSER_BLOCKING = 'mo_enable_browser_blocking';
 	const MO_MEDGE_BLOCKING = 'mo_medge_blocking';
 }
+
+class Mo_Site_Protection extends BasicEnum
+{
+	const EMERGENCY_OFFLINE = 'emergency_offline';
+	const OFFLINE_WHITELIST_IPS = 'offline_whitelist_ips';
+	const ADMIN_HTTP_AUTH = 'admin_http_auth';
+	const ADMIN_HTTP_USER = 'admin_http_user';
+	const ADMIN_HTTP_WHITELIST_IPS = 'admin_http_whitelist_ips';
+	const FEATURE_LOCK_ENABLED = 'feature_lock_enabled';
+	const FEATURE_LOCK_ITEMS = 'feature_lock_items';
+	const SERVER_RULES_APACHE = 'server_rules_apache';
+	const STALE_URL_REWRITE = 'link_migration_live';
+	const STALE_URL_HOSTS = 'link_migration_old_hosts';
+}

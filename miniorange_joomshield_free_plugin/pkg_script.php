@@ -81,21 +81,7 @@ class Pkg_MiniorangeJoomShieldInstallerScript
 
 		$this->showInstallMessage('');
 
-		$helperPath = JPATH_ADMINISTRATOR . '/components/com_joomshield/helpers/mo_networksecurity_customer_setup.php';
-
-		if (file_exists($helperPath))
-		{
-			include_once $helperPath;
-
-			if (class_exists('Joomla_NetworksecurityCustomer') && method_exists('Joomla_NetworksecurityCustomer', 'installationMessage'))
-			{
-				Joomla_NetworksecurityCustomer::installationMessage();
-			}
-		}
-		else
-		{
-			return;
-		}
+		return true;
 	}
 
 	protected function showInstallMessage($messages=array())
@@ -136,11 +122,11 @@ class Pkg_MiniorangeJoomShieldInstallerScript
 		<p>Plugin package for miniOrange <strong>JoomShield</strong> plugin in Joomla.</p>
 		<ul><h3>Steps to use the miniOrange JoomShield.</h3>
 			<li>Click on <strong>Components</strong></li>
-			<li>Click on <strong>miniOrange - JoomShield</strong> and select <strong>Login Security</strong> tab</li>
+			<li>Click on <strong>miniOrange - JoomShield</strong> and select <strong>Admin Security</strong> tab</li>
 			<li>You can start configuring</li>
 		</ul>
 		<div class="mo-row">
-			<a class=" mo-button-style " href="index.php?option=com_joomshield&tab=login_security">Start Using miniOrange JoomShield plugin</a>
+			<a class=" mo-button-style " href="index.php?option=com_joomshield&tab=admin_security">Start Using miniOrange JoomShield plugin</a>
 			<a class=" mo-button-style " href="https://plugins.miniorange.com/joomla-web-security" target="_blank">Read the miniOrange documents</a>
 			<a class=" mo-button-style " href="https://www.miniorange.com/contact" target="_blank">Get Support!</a>
 		</div>

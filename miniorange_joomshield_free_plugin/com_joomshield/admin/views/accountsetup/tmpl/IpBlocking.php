@@ -10,8 +10,10 @@
  * @contact   info@xecurify.com
  */
 
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 
 defined('_JEXEC') or die;
 
@@ -62,12 +64,13 @@ class IpBlocking
 			<hr>
 
 			<form name="mo_ip_lookup" method="post" action="<?php echo Route::_('index.php?option=com_joomshield&task=moipblocking.ipLookUp'); ?>">
+				<?php echo HTMLHelper::_('form.token'); ?>
 				<div class="mo_boot_row">
 					<div class="mo_boot_col-sm-3 mo_boot_px-0">
 						<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS'); ?>
 					</div>
 					<div class="mo_boot_col-sm-7">
-						<input class="form-control mo_security_textfield mo_boot_form-control" id="mo_lookupip" type="text"
+						<input class="mo_boot_form-control" id="mo_lookupip" type="text"
 							   name="mo_lookupip" placeholder="<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS_NOTE'); ?>" value="" width="100%;">
 					</div>
 				</div>
@@ -89,28 +92,24 @@ class IpBlocking
 
 			<details>
 				<form name="mo_ip" method="post">
-					<br>
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-5">
 							<?php echo Text::_('COM_JOOMSHIELD_IP_LOOKUP_NOTE2'); ?>
 						</div>
 						<div class="mo_boot_col-sm-7">
-							<input class="form-control mo_security_textfield mo_boot_form-control" type="text" name="mo_manual_ip" disabled
+							<input class="mo_boot_form-control" type="text" name="mo_manual_ip" disabled
 								   placeholder="<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS_PLACEHOLDER'); ?>" value="" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}">
 						</div>
 					</div>
-					<div class="mo_boot_row"><br></div>
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-7 mo_boot_offset-sm-5">
 							<input type="submit" class="mo_websecurity_btn" name="submit" value="<?php echo Text::_('COM_JOOMSHIELD_SAVE'); ?>" disabled>
 						</div>
 					</div>
 
-					<div class="mo_boot_row"><br></div>
-
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-5">
-							<input class="form-control mo_security_textfield mo_myInput mo_boot_form-control" type="text" placeholder="<?php echo Text::_('COM_JOOMSHIELD_SEARCH_IP_IN_TABLE_PLACEHOLDER'); ?>" id="myInput" disabled>
+							<input class="mo_boot_form-control" type="text" placeholder="<?php echo Text::_('COM_JOOMSHIELD_SEARCH_IP_IN_TABLE_PLACEHOLDER'); ?>" id="myInput" disabled>
 						</div>
 					</div>
 				</form>
@@ -134,30 +133,29 @@ class IpBlocking
 					</table><br>
 				</div><br>
 				<summary style="cursor: pointer;">
-					<strong><?php echo Text::_('COM_JOOMSHIELD_MANUAL_BLOCK_IPS'); ?> <sup><a href='index.php?option=com_joomshield&tab=license_plans' target="_blank"><strong>( <?php echo Text::_('COM_JOOMSHIELD_PREMIUM_FEATURE'); ?> )</strong></a></sup></strong>
+					<strong><?php echo Text::_('COM_JOOMSHIELD_MANUAL_BLOCK_IPS'); ?> <sup class="mo_js_premium_crown"><a href="index.php?option=com_joomshield&tab=license_plans" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>"><img src="<?php echo Uri::base(); ?>components/com_joomshield/assets/images/premium_crown.png" alt="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>" class="mo_js_premium_crown_img"><span class="mo_js_premium_tooltip"><?php echo Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'); ?></span></a></sup></strong>
 				</summary>
 			</details>
 
 			<details class="mo_boot_mt-4">
 				<form name="mo_save_whitelist_ips" method="post">
 					<br>
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-5">
 							<?php echo Text::_('COM_JOOMSHIELD_MANUAL_WHITELIST_IPS'); ?>
 						</div>
 						<div class="mo_boot_col-sm-7">
-							<input class="form-control mo_security_textfield mo_myInput mo_boot_form-control" type="text" name="mo_whitelist_ip" placeholder="<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS_PLACEHOLDER'); ?>" value="" disabled>
+							<input class="mo_boot_form-control" type="text" name="mo_whitelist_ip" placeholder="<?php echo Text::_('COM_JOOMSHIELD_ENTER_IP_ADDRESS_PLACEHOLDER'); ?>" value="" disabled>
 						</div>
 					</div>
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-7 mo_boot_offset-sm-5">
 							<input type="submit" name="submit" class="mo_websecurity_btn" value="<?php echo Text::_('COM_JOOMSHIELD_SAVE'); ?>" disabled>
 						</div>
 					</div>
-					<div class="mo_boot_row"><br></div>
-					<div class="mo_boot_row">
+					<div class="mo_boot_row mo_boot_mb-3">
 						<div class="mo_boot_col-sm-5">
-							<input class="form-control mo_security_textfield mo_myInput mo_boot_form-control" type="text" placeholder="<?php echo Text::_('COM_JOOMSHIELD_SEARCH_IP_IN_TABLE_PLACEHOLDER'); ?>" id="moinput" disabled>
+							<input class="mo_boot_form-control" type="text" placeholder="<?php echo Text::_('COM_JOOMSHIELD_SEARCH_IP_IN_TABLE_PLACEHOLDER'); ?>" id="moinput" disabled>
 						</div>
 					</div>
 				</form>
@@ -179,7 +177,7 @@ class IpBlocking
 				</div><br>
 
 				<summary style="cursor: pointer;">
-					<strong><?php echo Text::_('COM_JOOMSHIELD_WHITELIST_IPS'); ?> <sup><a href='index.php?option=com_joomshield&tab=license_plans'><strong>( <?php echo Text::_('COM_JOOMSHIELD_PREMIUM_FEATURE'); ?> )</strong></a></sup></strong>
+					<strong><?php echo Text::_('COM_JOOMSHIELD_WHITELIST_IPS'); ?> <sup class="mo_js_premium_crown"><a href="index.php?option=com_joomshield&tab=license_plans" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>"><img src="<?php echo Uri::base(); ?>components/com_joomshield/assets/images/premium_crown.png" alt="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>" class="mo_js_premium_crown_img"><span class="mo_js_premium_tooltip"><?php echo Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'); ?></span></a></sup></strong>
 				</summary>
 			</details>
 		</div><br>

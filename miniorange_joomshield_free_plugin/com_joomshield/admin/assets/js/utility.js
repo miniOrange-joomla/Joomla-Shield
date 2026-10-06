@@ -19,21 +19,54 @@ mojspSetBrowserTimezone();
 
 document.addEventListener('DOMContentLoaded', function () {
     mojspSetBrowserTimezone();
+    moJoomShieldInitAccordions();
 });
 
+function moJoomShieldInitAccordions() {
+    var storagePrefix = 'joomshield.accordion.';
+    var accordions = document.querySelectorAll('details.mo_js_server_notes_accordion[id]');
+
+    accordions.forEach(function (accordion) {
+        var storageKey = storagePrefix + accordion.id;
+
+        try {
+            var stored = window.sessionStorage.getItem(storageKey);
+
+            if (stored === '1') {
+                accordion.open = true;
+            } else if (stored === '0') {
+                accordion.open = false;
+            }
+        } catch (error) {
+        }
+
+        accordion.addEventListener('toggle', function () {
+            try {
+                window.sessionStorage.setItem(storageKey, accordion.open ? '1' : '0');
+            } catch (error) {
+            }
+        });
+    });
+}
+
 function redirect_after_failure_dropdown(value){
+    var requiredMarker = document.getElementById("custom_fail_dest_required");
+
     if ( value === "custom_redirect_url") {
         jQuery("#custom_fail_dest").show();
         jQuery("#custom_message").hide();
         document.getElementById('custom_fail_dest_id').required = true;
+        if (requiredMarker) requiredMarker.hidden = false;
     } else if ( value === "404_custom_message") {
         jQuery("#custom_fail_dest").hide();
         jQuery("#custom_message").show();
         document.getElementById("custom_fail_dest_id").required = false;
+        if (requiredMarker) requiredMarker.hidden = true;
     } else {
         jQuery("#custom_fail_dest").hide();
         jQuery("#custom_message").hide();
         document.getElementById("custom_fail_dest_id").required = false;
+        if (requiredMarker) requiredMarker.hidden = true;
     }
 }
 
@@ -41,13 +74,147 @@ function login_url_key(value){
     jQuery('#custom_admin_url').html(jQuery("#currentAdminUrl").html() + "/?" + value);
 }
 
+function moJoomShieldLimitLoginUrlKey(field, event) {
+    var maxLength = 20;
+    var notice = document.getElementById('custom_login_url_key_limit');
+    var key = '';
+
+    if (!field) {
+        return;
+    }
+
+    if (field.getAttribute('maxlength')) {
+        maxLength = parseInt(field.getAttribute('maxlength'), 10) || maxLength;
+    }
+
+    function setNotice(show) {
+        if (notice) {
+            notice.hidden = !show;
+        }
+    }
+
+    if (event && event.type === 'keydown') {
+        if (field.value.length < maxLength) {
+            return;
+        }
+
+        if (typeof field.selectionStart === 'number' && field.selectionStart !== field.selectionEnd) {
+            return;
+        }
+
+        key = event.key || '';
+
+        if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            setNotice(true);
+            event.preventDefault();
+        }
+
+        return;
+    }
+
+    if (event && event.type === 'paste') {
+        var clipboard = event.clipboardData || window.clipboardData;
+        var pasted = clipboard ? String(clipboard.getData('text') || '') : '';
+        var start = typeof field.selectionStart === 'number' ? field.selectionStart : field.value.length;
+        var end = typeof field.selectionEnd === 'number' ? field.selectionEnd : field.value.length;
+        var combined = field.value.slice(0, start) + pasted + field.value.slice(end);
+
+        if (combined.replace(/\s/g, '').length > maxLength) {
+            setNotice(true);
+        }
+
+        return;
+    }
+
+    if (field.value.length > maxLength) {
+        if (event) {
+            field.value = field.value.substring(0, maxLength);
+
+            if (typeof login_url_key === 'function') {
+                login_url_key(field.value);
+            }
+        }
+
+        setNotice(true);
+        return;
+    }
+
+    if (field.value.length < maxLength) {
+        setNotice(false);
+    }
+}
+
+function moJoomShieldBindLoginUrlKeyLimit() {
+    var field = document.getElementById('custom_login_url_key');
+
+    if (!field) {
+        return;
+    }
+
+    field.addEventListener('keydown', function (event) {
+        moJoomShieldLimitLoginUrlKey(field, event);
+    });
+    field.addEventListener('paste', function (event) {
+        moJoomShieldLimitLoginUrlKey(field, event);
+    });
+    field.addEventListener('input', function (event) {
+        moJoomShieldLimitLoginUrlKey(field, event);
+    });
+
+    if (field.value.length > 20) {
+        moJoomShieldLimitLoginUrlKey(field);
+    }
+}
+
+function moJoomShieldBindAdminPasswordToggle() {
+    var button = document.getElementById('admin_http_password_toggle');
+    var field = document.getElementById('admin_http_password');
+
+    if (!button || !field) {
+        return;
+    }
+
+    button.addEventListener('click', function () {
+        var showPassword = field.getAttribute('type') === 'password';
+        var showLabel = button.getAttribute('data-show-label') || 'Show';
+        var hideLabel = button.getAttribute('data-hide-label') || 'Hide';
+
+        field.setAttribute('type', showPassword ? 'text' : 'password');
+        button.setAttribute('aria-pressed', showPassword ? 'true' : 'false');
+        button.setAttribute('aria-label', showPassword ? hideLabel : showLabel);
+        button.textContent = showPassword ? hideLabel : showLabel;
+    });
+}
+
 function mo_show_tab(tab_id) {
+    var tabNames = {
+        websecurity_tab_1: 'admin_security',
+        websecurity_tab_2: 'login_security',
+        websecurity_tab_3: 'register_security',
+        websecurity_tab_4: 'ip_blocking',
+        websecurity_tab_5: 'ip_reports',
+        websecurity_tab_6: 'advanced_ip_blocking',
+        websecurity_tab_8: 'email_notifications',
+        websecurity_tab_10: 'advanced_features',
+        websecurity_tab_13: 'nginx_rules',
+        websecurity_tab_11: 'license_plans'
+    };
+
     jQuery(".mini_websecurity_tab").css("background",'none');
     jQuery(".mini_websecurity_tab").css("color",'white');
     jQuery(".mo_websecurity_tab").css('display','none');
     jQuery("#"+tab_id).css('display','block');
     jQuery("#mo_"+tab_id).css("background",'white');
     jQuery("#mo_"+tab_id).css("color",'black');
+
+    if (tabNames[tab_id] && window.history && window.history.replaceState) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('tab', tabNames[tab_id]);
+        window.history.replaceState({}, '', url.toString());
+
+        var returnTab = document.querySelector('input[name="return_tab"]');
+        if (returnTab) returnTab.value = tabNames[tab_id];
+    }
 }
 
 var clock=1;
@@ -97,6 +264,40 @@ function copyElement(){
     var copyInput = document.querySelector('#custom_login_url_key')
     copyInput.select()
     document.execCommand("copy")
+}
+
+function moJoomShieldCopySelector(selector, trigger){
+    var target = document.querySelector(selector);
+
+    if (!target) {
+        return;
+    }
+
+    if (typeof target.select === 'function') {
+        target.select();
+        document.execCommand('copy');
+        moJoomShieldCopyFeedback(trigger);
+        return;
+    }
+
+    copyToClipboard(selector);
+    moJoomShieldCopyFeedback(trigger);
+}
+
+function moJoomShieldCopyFeedback(trigger) {
+    if (!trigger) {
+        return;
+    }
+
+    var original = trigger.getAttribute('data-original-label') || trigger.textContent;
+    var copied = trigger.getAttribute('data-copied-text') || 'Copied';
+
+    trigger.setAttribute('data-original-label', original);
+    trigger.textContent = copied;
+
+    window.setTimeout(function () {
+        trigger.textContent = original;
+    }, 1600);
 }
 
 function toggleFeatureList(headerId) {
@@ -196,6 +397,10 @@ document.addEventListener('DOMContentLoaded', function () {
     enable_checkbox_blk_email();
     enable_checkbox_advance_ip();
     initCountryMultiselect();
+    initFeatureLockTimer();
+    moJoomShieldToggleAdminHttpRequired();
+    moJoomShieldBindLoginUrlKeyLimit();
+    moJoomShieldBindAdminPasswordToggle();
 });
 
 function enable_checkbox_advance_ip() {
@@ -212,18 +417,32 @@ function enable_checkbox_advance_ip() {
 function enable_checkbox_url() {
     var custom_log_url = document.getElementsByClassName('enable_custom_login')[0];
     var admin_log_url = document.getElementsByClassName('admin_log_url')[0];
-    var custom_redirect_url = document.getElementsByClassName('redirect_after_failure')[0];
-    var custom_url_failure = document.getElementsByClassName('custom_url_after_failure')[0];
-    var error_msg = document.getElementsByClassName('404_message')[0];
 
     if (!custom_log_url) return;
 
     var isEnabled = custom_log_url.checked === true;
 
-    admin_log_url.disabled = !isEnabled;
-    custom_redirect_url.disabled = !isEnabled;
-    custom_url_failure.disabled = !isEnabled;
-    error_msg.disabled = !isEnabled;
+    if (admin_log_url) {
+        admin_log_url.required = isEnabled;
+    }
+}
+
+function moJoomShieldToggleAdminHttpRequired() {
+    var enabledField = document.getElementById('admin_http_auth');
+    var username = document.getElementById('admin_http_user');
+    var password = document.getElementById('admin_http_password');
+
+    if (!enabledField || !username || !password) return;
+
+    var enabled = enabledField.checked === true;
+    var passwordRequired = enabled && password.getAttribute('data-has-password') !== '1';
+    var usernameMarker = document.getElementById('admin_http_user_required');
+    var passwordMarker = document.getElementById('admin_http_password_required');
+
+    username.required = enabled;
+    password.required = passwordRequired;
+    if (usernameMarker) usernameMarker.hidden = !enabled;
+    if (passwordMarker) passwordMarker.hidden = !passwordRequired;
 }
 
 function enable_checkbox_blk_email() {
@@ -232,7 +451,40 @@ function enable_checkbox_blk_email() {
 
     if (!block_fake_emails || !mo_enable_blk_email) return;
 
-    mo_enable_blk_email.disabled = block_fake_emails.checked !== true;
+    var isEnabled = block_fake_emails.checked === true;
+    var requiredMarker = document.getElementById('mo_email_domains_required');
+
+    mo_enable_blk_email.disabled = !isEnabled;
+    mo_enable_blk_email.required = isEnabled;
+    if (requiredMarker) requiredMarker.hidden = !isEnabled;
+}
+
+function initFeatureLockTimer() {
+    var status = document.querySelector('.mo_js_feature_lock_status');
+
+    if (!status) return;
+
+    var expiresAt = parseInt(status.getAttribute('data-expires-at'), 10) * 1000;
+    var countdown = status.querySelector('.mo_js_feature_lock_countdown');
+
+    function updateTimer() {
+        var remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+
+        if (remaining <= 0) {
+            window.location.reload();
+            return;
+        }
+
+        if (countdown) {
+            var minutes = Math.floor(remaining / 60);
+            var seconds = String(remaining % 60).padStart(2, '0');
+            countdown.textContent = ' (' + minutes + ':' + seconds + ')';
+        }
+
+        window.setTimeout(updateTimer, 1000);
+    }
+
+    updateTimer();
 }
 
 function initCountryMultiselect() {

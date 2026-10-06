@@ -72,8 +72,36 @@ CREATE TABLE IF NOT EXISTS `#__miniorange_jnsp_advance_blocking` (
     PRIMARY KEY (`id`)
 ) DEFAULT COLLATE=utf8_general_ci;
 
+CREATE TABLE IF NOT EXISTS `#__miniorange_jnsp_site_protection` (
+    `id` int(11) UNSIGNED NOT NULL,
+    `emergency_offline` tinyint(1) DEFAULT 0,
+    `offline_whitelist_ips` text,
+    `admin_http_auth` tinyint(1) DEFAULT 0,
+    `admin_http_user` VARCHAR(255) DEFAULT '',
+    `admin_http_hash` VARCHAR(255) DEFAULT '',
+    `admin_http_whitelist_ips` text,
+    `feature_lock_enabled` tinyint(1) DEFAULT 0,
+    `feature_lock_hash` VARCHAR(255) DEFAULT '',
+    `feature_lock_items` text,
+    `server_rules_apache` tinyint(1) DEFAULT 0,
+    `link_migration_live` tinyint(1) DEFAULT 0,
+    `link_migration_old_hosts` text,
+    PRIMARY KEY(`id`)
+) DEFAULT COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS `#__miniorange_jnsp_temp_users` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) UNSIGNED NOT NULL,
+    `created_by` int(11) UNSIGNED NOT NULL DEFAULT 0,
+    `expires_at` datetime NOT NULL,
+    `status` VARCHAR(32) NOT NULL DEFAULT 'active',
+    `created_at` datetime NOT NULL,
+    PRIMARY KEY (`id`)
+) DEFAULT COLLATE=utf8_general_ci;
+
 INSERT IGNORE INTO `#__miniorange_jnsp_loginsecurity_setup`(`id`) values (1);
 INSERT IGNORE INTO `#__miniorange_jnsp_registersecurity_setup`(`id`) values (1);
 INSERT IGNORE INTO `#__miniorange_networksecurity_customer`(`id`,`login_status`,`customer_key`,`api_key`,`email`,`password`,`admin_phone`,`customer_token`,`registration_status`,`new_registration`,`transaction_id`,`uninstall_feedback`) VALUES (1,0,'16555','fFd2XcvTGDemZvbw1bcUesNJWEqKbbUq','','','','','',0,'',0);
 INSERT IGNORE INTO `#__miniorange_login_transactions`(`id`) values (1);
 INSERT IGNORE INTO `#__miniorange_jnsp_advance_blocking`(`id`) values (1);
+INSERT IGNORE INTO `#__miniorange_jnsp_site_protection`(`id`) values (1);

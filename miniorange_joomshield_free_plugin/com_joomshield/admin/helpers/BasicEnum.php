@@ -62,7 +62,6 @@ abstract class BasicEnum
 	public static function getCountryList()
 	{
 		return [
-		'A1' => 'ANONYMOUS PROXY', 'A2' => 'SATELLITE PROVIDER', 'O1' => 'OTHER COUNTRY',
 		'AF' => 'AFGHANISTAN', 'AL' => 'ALBANIA', 'DZ' => 'ALGERIA', 'AS' => 'AMERICAN SAMOA',
 		'AD' => 'ANDORRA', 'AO' => 'ANGOLA', 'AI' => 'ANGUILLA', 'AQ' => 'ANTARCTICA', 'AG' => 'ANTIGUA AND BARBUDA',
 		'AR' => 'ARGENTINA', 'AM' => 'ARMENIA', 'AW' => 'ARUBA', 'AU' => 'AUSTRALIA', 'AT' => 'AUSTRIA', 'AZ' => 'AZERBAIJAN',

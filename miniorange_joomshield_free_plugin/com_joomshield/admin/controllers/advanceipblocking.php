@@ -30,14 +30,27 @@ class JoomshieldControllerAdvanceIPBlocking extends FormController
 	{
 		$post = Factory::getApplication()->input->post->getArray();
 
+		$this->checkToken();
+
+		$lockError = JoomShieldFeatureLock::assertAllowed('browser_blocking');
+
+		if ($lockError !== '')
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=advanced_ip_blocking', $lockError, 'error');
+
+			return;
+		}
+
 		if (empty($post))
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=advanced_ip_blocking', Text::_('COM_JOOMSHIELD_PLEASE_SELECT_AT_LEAST_ONE_BROWSER'), 'warning');
+
+			return;
 		}
 
 		$result = JoomShieldUtilities::saveBrowserBlocking($post);
 
-		if ($result == 0)
+		if ((int) $result === 0)
 		{
 			$this->setRedirect('index.php?option=com_joomshield&tab=advanced_ip_blocking', Text::_('COM_JOOMSHIELD_PLEASE_SELECT_AT_LEAST_ONE_BROWSER'), 'error');
 

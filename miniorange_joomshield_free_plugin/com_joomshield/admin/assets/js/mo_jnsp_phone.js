@@ -13,18 +13,23 @@ author: Jack O'Connor (http://jackocnr.com)
   $(document).ready(
       function() {
         //resize_phone_field();
-        jQuery(".mo_jnsp_query_phone").intlTelInput();
-        var mo_2fa_phone = document.getElementsByClassName('mo_jnsp_query_phone');
+        jQuery("#mo_jnsp_query_phone, .mo_jnsp_query_phone").intlTelInput();
+        var mo_2fa_phone = document.querySelectorAll('#mo_jnsp_query_phone, .mo_jnsp_query_phone');
         for(var i=0;i<mo_2fa_phone.length;i++){
           mo_2fa_phone[i].value=mo_2fa_phone[i].value.replace(' ',"")
         }  
-          Array.from(mo_2fa_phone).forEach(v => v.addEventListener('keyup', function() {
-            if(this.value=='' || this.value[0]!='+' )
-             {
-              this.value='+'+this.value;
-              jQuery(".mo_jnsp_query_phone").keyup();
-             }
-          }));
+          Array.from(mo_2fa_phone).forEach(v => {
+            v.addEventListener('input', function() {
+              this.value = this.value.replace(/[^0-9+ ]/g, '');
+            });
+            v.addEventListener('keyup', function() {
+              if (this.value == '' || this.value[0] != '+')
+              {
+                this.value = '+' + this.value;
+                jQuery(".mo_jnsp_query_phone").keyup();
+              }
+            });
+          });
 
        });
 }(jQuery));

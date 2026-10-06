@@ -17,24 +17,30 @@ use Joomla\CMS\MVC\Controller\BaseController;
 // No direct access
 defined('_JEXEC') or die;
 
+jimport('miniorangejoomshieldplugin.utility.JoomShieldUtilities');
+
 require_once JPATH_COMPONENT . '/helpers/mo_networksecurity_utility.php';
 require_once JPATH_COMPONENT . '/helpers/mo_networksecurity_customer_setup.php';
 require_once JPATH_COMPONENT . '/helpers/MonetworksecurityDB.php';
+require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/AdminSecurity.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/LoginSecurity.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/RegisterSecurity.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/IpBlocking.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/IpReports.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/mo_jnsp_support.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/AdvancedBlocking.php';
-require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/DB_Backup.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/Notifications.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/AdvancedFeatures.php';
+require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/NginxRules.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/licensePlans.php';
 require_once JPATH_COMPONENT . '/views/accountsetup/tmpl/mo_js_import_export.php';
 
-
-
 // Access check.
+if (JoomShieldTempAdmin::isCurrentUserTemporary())
+{
+	throw new Exception(Text::_('COM_JOOMSHIELD_TEMP_ADMIN_COMPONENT_DENIED'));
+}
+
 if (!Factory::getUser()->authorise('core.manage', 'com_joomshield'))
 {
 	throw new Exception(Text::_('JERROR_ALERTNOAUTHOR'));

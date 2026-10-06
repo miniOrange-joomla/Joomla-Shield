@@ -34,7 +34,7 @@ class LicensePlans
 
 								<div class="mo_boot_my-4">
 									<div class="mo_boot_d-flex mo_js_justify-content-between" onclick="toggleFeatureList('mo_free_feature_include')">
-										<div ><span class="mo_oauth_square_check"><i class="fa-solid fa-square-check"></i></span></div>
+										<div ><span class="mo_js_square_check"><i class="fa-solid fa-square-check"></i></span></div>
 										<div class="mo_js_pricing_table_feature_title"> <?php echo Text::_('COM_JOOMSHIELD_INCLUDED_FEATURES'); ?> </div>
 										<div><span class="mo_js_pricing_table_feature_arrow"> <i class="fa-solid fa-chevron-down"></i> </span></div>
 									</div>
@@ -46,6 +46,14 @@ class LicensePlans
 										<li> <?php echo Text::_('COM_JOOMSHIELD_ENFORCE_STRONG_PASSWORD'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_LOGIN_TRANSACTIONS_REPORTS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_BROWSER_BLOCKING_MICROSOFT_EDGE'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_ADMINISTRATOR_ACCESS_PROTECTION'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_FEATURE_ACCESS_PASSWORD'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_TEMPORARY_ADMINISTRATOR_ACCESS_SUPER_USER'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_EMERGENCY_SITE_OFFLINE'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_CLEAR_TEMPORARY_FILES'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_PURGE_ACTIVE_SESSIONS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_REPAIR_OUTDATED_URLS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_REPAIR_OPTIMIZE_DATABASE'); ?> </li>
 									</ul>
 								</div>
 
@@ -63,8 +71,6 @@ class LicensePlans
 										<li> <?php echo Text::_('COM_JOOMSHIELD_WHITELIST_BLACKLIST_IP_ADDRESS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_IP_ADDRESS_RANGE_BLOCKING'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_COUNTRY_BLOCKING'); ?> </li>
-										<li> <?php echo Text::_('COM_JOOMSHIELD_DATABASE_BACKUP'); ?> </li>
-										<li> <?php echo Text::_('COM_JOOMSHIELD_SCHEDULED_AUTOMATIC_DATABASE_BACKUP'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_IP_BLOCKED_NOTIFICATION'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_UNUSUAL_ACCOUNT_ACTIVITY_NOTIFICATION_TO_USERS'); ?> </li>
 									</ul>
@@ -80,7 +86,7 @@ class LicensePlans
 
 								<div class="mo_boot_my-4">
 									<div class="mo_boot_d-flex mo_js_justify-content-between" onclick="toggleFeatureList('mo_premium_feature_include')">
-										<div ><span class="mo_oauth_square_check"><i class="fa-solid fa-square-check"></i></span></div>
+										<div ><span class="mo_js_square_check"><i class="fa-solid fa-square-check"></i></span></div>
 										<div class="mo_js_pricing_table_feature_title"> <?php echo Text::_('COM_JOOMSHIELD_INCLUDED_FEATURES'); ?> </div>
 										<div><span class="mo_js_pricing_table_feature_arrow"> <i class="fa-solid fa-chevron-down"></i> </span></div>
 									</div>
@@ -92,16 +98,22 @@ class LicensePlans
 										<li> <?php echo Text::_('COM_JOOMSHIELD_ENFORCE_STRONG_PASSWORD'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_LOGIN_TRANSACTIONS_REPORTS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_BROWSER_BLOCKING'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_ADMINISTRATOR_ACCESS_PROTECTION'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_BRUTE_FORCE_PROTECTION'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_RESTRICT_LOGIN_ATTEMPTS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_CUSTOM_TIME_PERIOD_FOR_BLOCKED_IPS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_WHITELIST_BLACKLIST_IP_ADDRESS'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_IP_ADDRESS_RANGE_BLOCKING'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_COUNTRY_BLOCKING'); ?> </li>
-										<li> <?php echo Text::_('COM_JOOMSHIELD_DATABASE_BACKUP'); ?> </li>
-										<li> <?php echo Text::_('COM_JOOMSHIELD_SCHEDULED_AUTOMATIC_DATABASE_BACKUP'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_IP_BLOCKED_NOTIFICATION'); ?> </li>
 										<li> <?php echo Text::_('COM_JOOMSHIELD_UNUSUAL_ACCOUNT_ACTIVITY_NOTIFICATION_TO_USERS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_FEATURE_ACCESS_PASSWORD'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_TEMPORARY_ADMINISTRATOR_ACCESS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_EMERGENCY_SITE_OFFLINE'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_CLEAR_TEMPORARY_FILES'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_PURGE_ACTIVE_SESSIONS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_REPAIR_OUTDATED_URLS'); ?> </li>
+										<li> <?php echo Text::_('COM_JOOMSHIELD_REPAIR_OPTIMIZE_DATABASE'); ?> </li>
 									</ul>
 								</div>
 							</div>

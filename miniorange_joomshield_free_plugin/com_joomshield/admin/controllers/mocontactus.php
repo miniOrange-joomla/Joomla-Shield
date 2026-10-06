@@ -13,6 +13,7 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Session\Session;
 
 defined('_JEXEC') or die('Restricted access');
 
@@ -27,10 +28,15 @@ class JoomshieldControllerMoContactUS extends FormController
 
 	public function contactUs()
 	{
+		if (!Session::checkToken('post') && !JoomShieldCompat::checkToken('post'))
+		{
+			throw new \RuntimeException(Text::_('JINVALID_TOKEN_NOTICE'), 403);
+		}
+
 		$input = Factory::getApplication()->input;
 		$email = trim($input->get('query_email', '', 'string'));
 		$query = trim($input->get('query', '', 'raw'));
-		$phone = trim($input->get('query_phone', '', 'string'));
+		$phone = preg_replace('/[^0-9+ ]/', '', trim($input->get('query_phone', '', 'string')));
 
 		if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL))
 		{

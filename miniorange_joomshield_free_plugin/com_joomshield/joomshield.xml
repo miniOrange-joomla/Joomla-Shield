@@ -7,7 +7,7 @@
     <authorUrl>https://www.miniorange.com/</authorUrl>
     <copyright>Copyright (C) 2015 miniOrange. All rights reserved.</copyright>
     <license>GNU General Public License version 3; see LICENSE.txt</license>
-	<version>1.0.2</version>
+	<version>1.0.4</version>
 	<description>This component is part of miniOrange JoomShield extension</description>
 	<install>
 		<sql>
@@ -23,15 +23,16 @@
 	<administration>
 		<menu link="index.php?option=com_joomshield&amp;tab-panel=account_setup">COM_JOOMSHIELD_MENU</menu>
 		<submenu>
+			<menu link="option=com_joomshield&amp;tab=admin_security" alt="JoomShield /Admin Security">COM_JOOMSHIELD_TAB_ADMIN_SECURITY</menu>
 			<menu link="option=com_joomshield&amp;tab=login_security" alt="JoomShield /Login Security">COM_JOOMSHIELD_TAB2_LOGIN_SECURITY</menu>
 			<menu link="option=com_joomshield&amp;tab=register_security" alt="JoomShield /Register Security">COM_JOOMSHIELD_TAB4_IP_REGISTER_SECURITY</menu>
 			<menu link="option=com_joomshield&amp;tab=ip_blocking" alt="JoomShield /IP Blocking">COM_JOOMSHIELD_TAB3_IP_BLOCKING</menu>
 			<menu link="option=com_joomshield&amp;tab=ip_reports" alt="JoomShield /IP Reports">COM_JOOMSHIELD_TAB3_IP_REPORTS</menu>
 			<menu link="option=com_joomshield&amp;tab=advanced_ip_blocking" alt="JoomShield /Advance Blocking">COM_JOOMSHIELD_TAB5_ADVANCED_BLOCKING</menu>
-			<menu link="option=com_joomshield&amp;tab=db_backup" alt="JoomShield /DB Backup">COM_JOOMSHIELD_TAB6_DB_BACKUP</menu>
+			<menu link="option=com_joomshield&amp;tab=advanced_features" alt="JoomShield /Advanced Features">COM_JOOMSHIELD_TAB8_ADVANCED_FEATURES</menu>
+			<menu link="option=com_joomshield&amp;tab=nginx_rules" alt="JoomShield /Nginx Rules">COM_JOOMSHIELD_TAB_NGINX_RULES</menu>
 			<menu link="option=com_joomshield&amp;tab=email_notifications" alt="JoomShield /Notification">COM_JOOMSHIELD_TAB7_NOTIFICATIONS</menu>
             <menu link="option=com_joomshield&amp;tab=license_plans" alt="JoomShield /License Plans">COM_JOOMSHIELD_TAB9_LICENSE_PLANS</menu>
-			<menu link="option=com_joomshield&amp;tab=advanced_features" alt="JoomShield /Advanced Features">COM_JOOMSHIELD_TAB8_ADVANCED_FEATURES</menu>
 		</submenu>
 
 		<files folder="admin">
@@ -43,6 +44,8 @@
 			<folder>sql</folder>
 			<folder>views</folder>
 			<folder>controllers</folder>
+			<folder>backups</folder>
+			<folder>nginx</folder>
 		</files>
 		<languages folder="admin/language">
 		    <language tag="en-GB">en-GB/en-GB.com_joomshield.ini</language>

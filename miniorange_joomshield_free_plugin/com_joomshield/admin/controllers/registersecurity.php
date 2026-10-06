@@ -29,8 +29,22 @@ class JoomshieldControllerRegisterSecurity extends FormController
 	{
 		$post = Factory::getApplication()->input->post->getArray();
 
+		$this->checkToken();
+
 		if (isset($post['option_change_password']))
 		{
+			return;
+		}
+
+		$featureKey = isset($post['mo_block_fake_registration'])
+			? 'registration_domains'
+			: 'registration_password_policy';
+		$lockError = JoomShieldFeatureLock::assertAllowed($featureKey);
+
+		if ($lockError !== '')
+		{
+			$this->setRedirect('index.php?option=com_joomshield&tab=register_security', $lockError, 'error');
+
 			return;
 		}
 
@@ -41,10 +55,10 @@ class JoomshieldControllerRegisterSecurity extends FormController
 
 			$db = Factory::getDbo();
 			$query = $db->getQuery(true);
-			$fields = array(
+			$fields = [
 				$db->quoteName('block_fake_emails') . ' = ' . $db->quote($blockFakeEmails),
 				$db->quoteName('mo_email_domains') . ' = ' . $db->quote($blockEmailDomains),
-			);
+			];
 			$msg = Text::_('COM_JOOMSHIELD_BLOCK_REGISTRATION_FROM_FAKE_USERS_CONFIGURATION_HAS_BEEN_SAVED_SUCCESSFULLY');
 		}
 		else
@@ -53,16 +67,16 @@ class JoomshieldControllerRegisterSecurity extends FormController
 
 			$db = Factory::getDbo();
 			$query = $db->getQuery(true);
-			$fields = array(
+			$fields = [
 				$db->quoteName('enforce_strong_password_register') . ' = ' . $db->quote($enforceStrongPass),
-			);
+			];
 			$msg = Text::_('COM_JOOMSHIELD_ENFORCE_STRONG_PASSWORD_CONFIGURATION_HAS_BEEN_SAVED_SUCCESSFULLY');
 		}
 
 		// Conditions for which records should be updated.
-		$conditions = array(
-			$db->quoteName('id') . ' = 1'
-		);
+		$conditions = [
+			$db->quoteName('id') . ' = 1',
+		];
 
 		$query->update($db->quoteName('#__miniorange_jnsp_registersecurity_setup'))->set($fields)->where($conditions);
 		$db->setQuery($query);

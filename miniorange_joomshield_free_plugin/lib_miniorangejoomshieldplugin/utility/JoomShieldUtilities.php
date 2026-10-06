@@ -13,12 +13,25 @@
 use Joomla\CMS\Environment\Browser;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\CMS\User\UserHelper;
 use Joomla\CMS\Version;
 use Joomla\CMS\Router\Route;
 
 defined('_JEXEC') or die;
+
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldCompat.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldSiteProtection.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldFeatureLock.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldAdminAuth.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldSiteOffline.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldTempAdmin.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldServerRules.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldMaintenance.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JoomShieldUrlRewrite.php';
 
 require_once rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_joomshield' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo_networksecurity_utility.php';
 
@@ -39,16 +52,62 @@ class JoomShieldUtilities
 
 	public static function getClientIp()
 	{
-		if (!empty($_SERVER['HTTP_CLIENT_IP']))
+		$remoteAddress = JoomShieldCompat::canonicalIp((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+
+		// A public peer is the visitor. Forwarded headers are ignored so a client cannot spoof a whitelisted address.
+		if ($remoteAddress === '' || !JoomShieldCompat::isTrustedProxy($remoteAddress))
 		{
-			return $_SERVER['HTTP_CLIENT_IP'];
-		}
-		elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-		{
-			return $_SERVER['HTTP_X_FORWARDED_FOR'];
+			return $remoteAddress;
 		}
 
-		return $_SERVER['REMOTE_ADDR'];
+		$forwarded = self::clientIpFromProxyHeaders();
+
+		return $forwarded !== '' ? $forwarded : $remoteAddress;
+	}
+
+	private static function clientIpFromProxyHeaders()
+	{
+		$forwarded = trim((string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+		$hops = [];
+
+		if ($forwarded !== '')
+		{
+			foreach (preg_split('/\s*,\s*/', $forwarded) as $hop)
+			{
+				$ip = JoomShieldCompat::canonicalIp($hop);
+
+				if ($ip !== '')
+				{
+					$hops[] = $ip;
+				}
+			}
+		}
+
+		if ($hops !== [])
+		{
+			for ($index = count($hops) - 1; $index >= 0; $index--)
+			{
+				if (!JoomShieldCompat::isTrustedProxy($hops[$index]))
+				{
+					return $hops[$index];
+				}
+			}
+
+			// A local or Docker visitor is private. The nearest proxy records that visitor as the rightmost hop.
+			return $hops[count($hops) - 1];
+		}
+
+		foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'] as $header)
+		{
+			$ip = JoomShieldCompat::canonicalIp((string) ($_SERVER[$header] ?? ''));
+
+			if ($ip !== '')
+			{
+				return $ip;
+			}
+		}
+
+		return '';
 	}
 
 	public static function getLoginRequestUrl()
@@ -116,11 +175,28 @@ class JoomShieldUtilities
 
 	public static function getUserCredentials($username)
 	{
+		if ($username === null || $username === '')
+		{
+			return null;
+		}
+
 		$db = Factory::getDbo();
 		$query = $db->getQuery(true)
-			->select('id,password')
+			->select($db->quoteName(['id', 'username', 'password']))
 			->from($db->quoteName('#__users'))
 			->where($db->quoteName('username') . ' = ' . $db->quote($username));
+		$db->setQuery($query);
+		$result = $db->loadObject();
+
+		if ($result)
+		{
+			return $result;
+		}
+
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['id', 'username', 'password']))
+			->from($db->quoteName('#__users'))
+			->where($db->quoteName('email') . ' = ' . $db->quote($username));
 		$db->setQuery($query);
 
 		return $db->loadObject();
@@ -692,16 +768,24 @@ class JoomShieldUtilities
 
 	public static function getFeedbackForm($post)
 	{
-		$radio = $post['deactivate_plugin'] ?? '';
-		$data = $post['query_feedback'] ?? '';
-
 		$currentUser = Factory::getUser();
-		$adminEmailDefault = $currentUser->email ?? '';
-		$formEmail = $post['query_email'] ?? $adminEmailDefault;
-		$data1 = isset($post['miniorange_feedback_submit']) ? $radio . ' : ' . $data : 'Skipped Feedback';
-		include_once JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_joomshield' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo_networksecurity_customer_setup.php';
 
-		self::submitFeedbackForm($formEmail, $adminEmailDefault, $data1);
+		$isSkipped = isset($post['skip_feedback']) || !isset($post['miniorange_feedback_submit']);
+
+		if (!$isSkipped)
+		{
+			$radio = self::getScalarValue($post, 'deactivate_plugin');
+			$data = self::getScalarValue($post, 'query_feedback');
+			$formEmail = self::getScalarValue($post, 'query_email');
+
+			if ($radio !== '' || $data !== '')
+			{
+				include_once JPATH_BASE . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_joomshield' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'mo_networksecurity_customer_setup.php';
+
+				self::submitFeedbackForm($formEmail, $radio . ' : ' . $data);
+			}
+		}
+
 		self::genDbUpdate('#__miniorange_networksecurity_customer', ['uninstall_feedback' => 1]);
 
 		$extensionIds = $post['result'] ?? [];
@@ -713,23 +797,67 @@ class JoomShieldUtilities
 
 		foreach ($extensionIds as $fbkey)
 		{
-			$result = self::getDbValuesUsingColumns('type', '#__extensions', $fbkey);
+			if (!is_scalar($fbkey))
+			{
+				continue;
+			}
+
 			$identifier = (int) $fbkey;
-			$type = '';
 
-			foreach ($result as $results)
+			if ($identifier <= 0)
 			{
-				$type = $results;
+				continue;
 			}
 
-			if (!empty($type) && $identifier > 0)
+			$type = self::getRemovableExtensionType($identifier);
+
+			if ($type === '')
 			{
-				self::uninstallExtension($type, $identifier);
+				continue;
 			}
+
+			self::uninstallExtension($type, $identifier);
 		}
 	}
 
-	public static function submitFeedbackForm($email, $adminEmail, $query)
+	private static function getScalarValue($post, $key)
+	{
+		$value = $post[$key] ?? '';
+
+		if (!is_scalar($value))
+		{
+			return '';
+		}
+
+		return trim((string) $value);
+	}
+
+	// Returns the extension type only when the extension exists and is not shipped as a
+	// locked/protected core extension. Joomla 3 uses `protected`, Joomla 4+ uses `locked`.
+	private static function getRemovableExtensionType($extensionId)
+	{
+		$db = Factory::getDbo();
+		$query = $db->getQuery(true);
+		$query->select('*');
+		$query->from($db->quoteName('#__extensions'));
+		$query->where($db->quoteName('extension_id') . ' = ' . (int) $extensionId);
+		$db->setQuery($query);
+		$extension = $db->loadAssoc();
+
+		if (empty($extension['type']))
+		{
+			return '';
+		}
+
+		if (!empty($extension['protected']) || !empty($extension['locked']))
+		{
+			return '';
+		}
+
+		return (string) $extension['type'];
+	}
+
+	public static function submitFeedbackForm($email, $query)
 	{
 		$url = MoNetworkSecurityUtility::getHostname() . '/moas/api/notify/send';
 		$customerKey = MoNetworkSecurityUtility::getNotifyCustomerKey();
@@ -747,7 +875,6 @@ class JoomShieldUtilities
 		$content = '<div >Hello, <br><br>
                     <b>Company : </b> <a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
                     <b>Email: </b><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
-                    <b>Admin Email: </b>' . $adminEmail . '<br><br>
                     <b>Plugin Deactivated: </b>' . $query1 . '<br><br>
                     <b>Reason: </b>' . $query . '<br><br>
                     <b>System info: </b>' . $systemInfo . '
@@ -768,48 +895,6 @@ class JoomShieldUtilities
 		);
 
 		return MoNetworkSecurityUtility::sendNotifyApiRequest($url, $fields);
-	}
-
-	public static function pluginEfficiencyCheck($email)
-	{
-		$cTime = date("Y-m-d", time());
-		$baseUrl = Uri::root();
-		$url = MoNetworkSecurityUtility::getHostname() . '/moas/api/notify/send';
-		$customerKey = MoNetworkSecurityUtility::getNotifyCustomerKey();
-		$fromEmail             = $email;
-		$subject            = "miniOrange JoomShield [Free] for Efficiency";
-		$phpVersion = phpversion();
-		$version = new Version;
-		$jCmsVersion = $version->getShortVersion();
-		$osInfo = self::getOsInfo();
-		$timezoneInfo = self::getUserTimezoneInfo();
-		$systemInfo = "Joomla " . $jCmsVersion . " | PHP " . $phpVersion . " | OS " . $osInfo . " | Timezone " . $timezoneInfo;
-
-		$query1 = "miniOrange JoomShield [Free] Plugin to improve efficiency";
-		$content = '<div >Hello, <br><br>
-                    <b>Company : </b><a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
-                    <b>Email :</b><a href="mailto:' . $fromEmail . '" target="_blank">' . $fromEmail . '</a><br><br>
-                    <b>Plugin Efficency Check: </b>' . $query1 . '<br><br>
-                    <b>Website: </b>' . $baseUrl . '<br><br>
-                    <b>Creation Date: </b>' . $cTime . '<br><br>
-                    <b>System Info: </b>' . $systemInfo . '</div>';
-
-		$fields = array(
-			'customerKey'    => $customerKey,
-			'sendEmail'     => true,
-			'email'         => array(
-				'customerKey'     => $customerKey,
-				'fromEmail'       => 'joomlasupport@xecurify.com',
-				'bccEmail'        => 'nikhil.bhot@xecurify.com',
-				'fromName'        => 'miniOrange',
-				'toEmail'         => 'nutan.barad@xecurify.com',
-				'toName'          => 'nutan.barad@xecurify.com',
-				'subject'         => $subject,
-				'content'         => $content
-			),
-		);
-
-		MoNetworkSecurityUtility::sendNotifyApiRequest($url, $fields);
 	}
 
 	public static function downloadReports()
@@ -868,8 +953,6 @@ class JoomShieldUtilities
 		$urlKey = $loginConfig['access_lgn_urlky'] ?? '';
 		$requestedUri = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 
-		$cstmLnk = $root . 'administrator/?' . $urlKey;
-
 		$customDestination = $loginConfig['custom_failure_destination'] ?? '';
 		$customErrMessage = $loginConfig['custom_message_after_fail'] ?? '';
 		$failureResponse = $loginConfig['after_adm_failure_response'] ?? '';
@@ -906,7 +989,7 @@ class JoomShieldUtilities
 			return;
 		}
 
-		$check = self::clnk($requestedUri, $cstmLnk);
+		$check = self::requestHasAdminAccessKey($urlKey) ? 1 : 0;
 
 		if ($check)
 		{
@@ -967,16 +1050,46 @@ class JoomShieldUtilities
 		}
 	}
 
-	public static function clnk($url1, $url2)
+	public static function requestHasAdminAccessKey($urlKey)
 	{
-		if ($url1 == $url2)
+		$urlKey = trim((string) $urlKey);
+
+		if ($urlKey === '')
 		{
-			return 1;
+			return false;
 		}
-		else
+
+		$candidates = [
+			(string) ($_SERVER['QUERY_STRING'] ?? ''),
+			(string) ($_SERVER['REDIRECT_QUERY_STRING'] ?? ''),
+		];
+		$requestUri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+		$queryPos = strpos($requestUri, '?');
+
+		if ($queryPos !== false)
 		{
-			return 0;
+			$candidates[] = substr($requestUri, $queryPos + 1);
 		}
+
+		foreach ($candidates as $queryString)
+		{
+			$queryString = rawurldecode($queryString);
+
+			if ($queryString === $urlKey)
+			{
+				return true;
+			}
+
+			$vars = [];
+			parse_str($queryString, $vars);
+
+			if (array_key_exists($urlKey, $vars))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public static function checkDoLogin()
@@ -1093,28 +1206,443 @@ class JoomShieldUtilities
 
 	public static function checkPasswdStrength($passwd)
 	{
-		if ($passwd != null)
+		if ($passwd === null || $passwd === '')
 		{
-			if (strlen($passwd) > 11 && preg_match("#[0-9]+#", $passwd) && preg_match("#[a-zA-Z]+#", $passwd) && preg_match('/[^a-zA-Z\d]/', $passwd) && preg_match('/.[!,@,#,$,%,^,&,*,?,_,~,-,(,)]/', $passwd))
-			{
-				return "success";
-			}
-			else
-			{
-				return "false";
-			}
+			return 'false';
 		}
+
+		$hasLength = strlen($passwd) >= 12;
+		$hasLower = (bool) preg_match('/[a-z]/', $passwd);
+		$hasUpper = (bool) preg_match('/[A-Z]/', $passwd);
+		$hasDigit = (bool) preg_match('/\d/', $passwd);
+		$hasSpecial = (bool) preg_match('/[!@#$%^&*?_~()\-]/', $passwd);
+
+		if ($hasLength && $hasLower && $hasUpper && $hasDigit && $hasSpecial)
+		{
+			return 'success';
+		}
+
+		return 'false';
 	}
 
-	public static function enqueueStrongPasswordErrors()
+	public static function getPasswordStrengthErrors($passwd)
+	{
+		self::loadJoomShieldLanguage();
+		$errors = [];
+
+		if ($passwd === null || $passwd === '' || strlen($passwd) < 12)
+		{
+			$errors[] = Text::_('COM_JOOMSHIELD_PASSWORD_SHOULD_BE_MINIMUM_12_CHARACTERS');
+		}
+
+		if ($passwd === null || $passwd === '' || !preg_match('/[a-z]/', $passwd) || !preg_match('/[A-Z]/', $passwd))
+		{
+			$errors[] = Text::_('COM_JOOMSHIELD_PASSWORD_SHOULD_CONTAIN_AT_LEAST_ONE_CAPITAL_AND_ONE_SMALL_LETTER');
+		}
+
+		if ($passwd === null || $passwd === '' || !preg_match('/\d/', $passwd))
+		{
+			$errors[] = Text::_('COM_JOOMSHIELD_PASSWORD_SHOULD_CONTAIN_AT_LEAST_ONE_NUMERIC_CHARACTER');
+		}
+
+		if ($passwd === null || $passwd === '' || !preg_match('/[!@#$%^&*?_~()\-]/', $passwd))
+		{
+			$errors[] = Text::_('COM_JOOMSHIELD_PASSWORD_SHOULD_CONTAIN_AT_LEAST_ONE_SPECIAL_CHARACTER');
+		}
+
+		return $errors;
+	}
+
+	public static function extractLoginCredentials($credentials = null)
+	{
+		$username = '';
+		$password = '';
+
+		if (is_array($credentials))
+		{
+			$username = trim((string) ($credentials['username'] ?? ''));
+			$password = (string) ($credentials['password'] ?? '');
+		}
+
+		if ($username === '' || $password === '')
+		{
+			$app = Factory::getApplication();
+			$input = $app->input;
+			$jform = $input->post->get('jform', [], 'array');
+
+			if ($username === '')
+			{
+				$username = trim((string) $input->post->get('username', '', 'USERNAME'));
+			}
+
+			if ($username === '' && !empty($jform['username']))
+			{
+				$username = trim((string) $jform['username']);
+			}
+
+			if ($password === '')
+			{
+				$password = (string) $input->post->get('password', '', 'RAW');
+			}
+
+			if ($password === '')
+			{
+				$password = (string) $input->post->get('passwd', '', 'RAW');
+			}
+
+			if ($password === '' && isset($jform['password']))
+			{
+				$password = (string) $jform['password'];
+			}
+		}
+
+		return [
+			'username' => $username,
+			'password' => $password,
+		];
+	}
+
+	public static function isLoginAttemptRequest()
 	{
 		$app = Factory::getApplication();
 
-		$app->enqueueMessage('Please select a strong password.', 'error');
-		$app->enqueueMessage('Password should contain at least one uppercase and one lowercase letter.', 'error');
-		$app->enqueueMessage('Password should be a minimum of 12 characters.', 'error');
-		$app->enqueueMessage('Password should contain at least one numeric character.', 'error');
-		$app->enqueueMessage('Password should contain at least one special character (!, @, #, $, %, ^, &, *, ?, _, ~, -).', 'error');
+		if (method_exists($app, 'isClient') && $app->isClient('cli'))
+		{
+			return false;
+		}
+
+		$input = $app->input;
+		$task = $input->getCmd('task', '');
+		$option = $input->getCmd('option', '');
+
+		if ($task === '')
+		{
+			$task = $input->post->getCmd('task', '');
+		}
+
+		if ($option === '')
+		{
+			$option = $input->post->getCmd('option', '');
+		}
+
+		if ($task === 'user.login')
+		{
+			return true;
+		}
+
+		if ($option === 'com_login' && $task === 'login')
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public static function isStrongPasswordLoginEnabled()
+	{
+		$config = self::getLoginSecurityConfig();
+
+		return is_array($config) && (int) ($config['enforce_strong_password_login'] ?? 0) === 1;
+	}
+
+	public static function getCurrentLoginAction($options = [])
+	{
+		if (is_array($options) && !empty($options['action']))
+		{
+			return (string) $options['action'];
+		}
+
+		$app = Factory::getApplication();
+
+		if ($app->isClient('administrator'))
+		{
+			return 'core.login.admin';
+		}
+
+		if (method_exists($app, 'isClient') && $app->isClient('api'))
+		{
+			return 'core.login.api';
+		}
+
+		return 'core.login.site';
+	}
+
+	public static function canUserLoginToCurrentForm($userId, $options = [])
+	{
+		$user = self::loadUserById((int) $userId);
+
+		if ($user === null)
+		{
+			return false;
+		}
+
+		if ((int) $user->block === 1)
+		{
+			return false;
+		}
+
+		if (!$user->authorise(self::getCurrentLoginAction($options)))
+		{
+			return false;
+		}
+
+		$app = Factory::getApplication();
+
+		if ($app->isClient('site') && (int) $app->get('offline') === 1 && !$user->authorise('core.login.offline'))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public static function getForcedPasswordResetUser($credentials = null, $options = [])
+	{
+		if (!self::isStrongPasswordLoginEnabled())
+		{
+			return null;
+		}
+
+		$loginCredentials = self::extractLoginCredentials($credentials);
+
+		if ($loginCredentials['username'] === '' || $loginCredentials['password'] === '')
+		{
+			return null;
+		}
+
+		if (self::checkPasswdStrength($loginCredentials['password']) === 'success')
+		{
+			return null;
+		}
+
+		$user = self::getUserCredentials($loginCredentials['username']);
+
+		if ($user === null)
+		{
+			return null;
+		}
+
+		if (!UserHelper::verifyPassword($loginCredentials['password'], $user->password, $user->id))
+		{
+			return null;
+		}
+
+		if (!self::canUserLoginToCurrentForm((int) $user->id, $options))
+		{
+			return null;
+		}
+
+		return $user;
+	}
+
+	public static function enforceStrongPasswordLogin($credentials = null, $options = [])
+	{
+		$post = Factory::getApplication()->input->post->getArray();
+
+		if (isset($post['option_change_password']) && $post['option_change_password'] === 'mo_jnsp_change_password')
+		{
+			return;
+		}
+
+		if ($credentials === null && !self::isLoginAttemptRequest())
+		{
+			return;
+		}
+
+		$user = self::getForcedPasswordResetUser($credentials, $options);
+
+		if ($user === null)
+		{
+			return;
+		}
+
+		self::beginForcedPasswordReset($user->username, (int) $user->id);
+	}
+
+	public static function blockWeakPasswordAfterLogin($options = [])
+	{
+		$user = self::getForcedPasswordResetUser(null, $options);
+
+		if ($user === null)
+		{
+			return;
+		}
+
+		try
+		{
+			Factory::getApplication()->logout((int) $user->id);
+		}
+		catch (\Throwable $e)
+		{
+		}
+
+		self::beginForcedPasswordReset($user->username, (int) $user->id);
+	}
+
+	public static function beginForcedPasswordReset($username, $userId)
+	{
+		$app = Factory::getApplication();
+		$session = $app->getSession();
+		$token = bin2hex(random_bytes(16));
+
+		$session->set('joomshield.force_password_reset', [
+			'username' => $username,
+			'user_id'  => (int) $userId,
+			'token'    => $token,
+			'created'  => time(),
+			'is_admin' => $app->isClient('administrator'),
+			]
+		);
+
+		self::showForcedPasswordResetForm();
+	}
+
+	public static function showForcedPasswordResetForm($errorMessage = '')
+	{
+		$resetState = self::getForcedPasswordResetState();
+
+		if ($resetState === null)
+		{
+			$app = Factory::getApplication();
+			self::loadJoomShieldLanguage();
+			$app->enqueueMessage(Text::_('COM_JOOMSHIELD_PASSWORD_RESET_SESSION_EXPIRED'), 'warning');
+			$app->redirect(self::getPasswordResetLoginUrl());
+		}
+
+		$returnUrl = self::getPasswordResetLoginUrl($resetState);
+		$resetUsername = $resetState['username'];
+		$resetToken = $resetState['token'];
+		$resetPasswordError = $errorMessage;
+		$formAction = htmlspecialchars(Uri::getInstance()->toString(), ENT_QUOTES, 'UTF-8');
+
+		include JPATH_PLUGINS . '/authentication/miniorangeshield/includes/change-password.php';
+		exit();
+	}
+
+	public static function handleChangePassword($username = '', $newPasswd = '', $confirmPasswd = '', $returnUrl = '')
+	{
+		self::loadJoomShieldLanguage();
+		$app = Factory::getApplication();
+		$input = $app->input;
+		$resetState = self::getForcedPasswordResetState();
+
+		if ($resetState === null)
+		{
+			$app->enqueueMessage(Text::_('COM_JOOMSHIELD_PASSWORD_RESET_SESSION_EXPIRED'), 'warning');
+			$app->redirect(self::getPasswordResetLoginUrl());
+		}
+
+		if (!Session::checkToken('post') && !JoomShieldCompat::checkToken('post'))
+		{
+			self::showForcedPasswordResetForm(Text::_('JINVALID_TOKEN_NOTICE'));
+		}
+
+		$postedToken = (string) $input->post->get('joomshield_reset_token', '', 'ALNUM');
+
+		if ($postedToken === '' || !hash_equals($resetState['token'], $postedToken))
+		{
+			self::showForcedPasswordResetForm(Text::_('COM_JOOMSHIELD_PASSWORD_RESET_SESSION_EXPIRED'));
+		}
+
+		if ($newPasswd === '')
+		{
+			$newPasswd = (string) $input->post->get('new_password', '', 'RAW');
+		}
+
+		if ($confirmPasswd === '')
+		{
+			$confirmPasswd = (string) $input->post->get('confirm_password', '', 'RAW');
+		}
+
+		if ($newPasswd !== $confirmPasswd)
+		{
+			self::showForcedPasswordResetForm(Text::_('COM_JOOMSHIELD_PASSWORDS_DO_NOT_MATCH'));
+		}
+
+		if (self::checkPasswdStrength($newPasswd) !== 'success')
+		{
+			$errors = self::getPasswordStrengthErrors($newPasswd);
+			array_unshift($errors, Text::_('COM_JOOMSHIELD_PLEASE_SELECT_STRONG_PASSWORD'));
+			self::showForcedPasswordResetForm(implode('<br>', $errors));
+		}
+
+		$userId = (int) $resetState['user_id'];
+
+		if ($userId < 1)
+		{
+			self::clearForcedPasswordResetState();
+			$app->enqueueMessage(Text::_('COM_JOOMSHIELD_PASSWORD_RESET_SESSION_EXPIRED'), 'warning');
+			$app->redirect(self::getPasswordResetLoginUrl($resetState));
+		}
+
+		$passwordHash = UserHelper::hashPassword($newPasswd);
+		$db = Factory::getDbo();
+		$query = $db->getQuery(true)
+			->update($db->quoteName('#__users'))
+			->set($db->quoteName('password') . ' = ' . $db->quote($passwordHash))
+			->set($db->quoteName('requireReset') . ' = 0')
+			->where($db->quoteName('id') . ' = ' . $userId);
+		$db->setQuery($query);
+		$db->execute();
+
+		self::clearForcedPasswordResetState();
+		$app->enqueueMessage(Text::_('COM_JOOMSHIELD_PASSWORD_UPDATED_SUCCESSFULLY'), 'success');
+		$app->redirect(self::getPasswordResetLoginUrl($resetState));
+	}
+
+	public static function enqueueStrongPasswordErrors($passwd = null)
+	{
+		self::loadJoomShieldLanguage();
+		$app = Factory::getApplication();
+		$app->enqueueMessage(self::buildStrongPasswordErrorMessage($passwd), 'error');
+	}
+
+	public static function buildStrongPasswordErrorMessage($passwd = null)
+	{
+		self::loadJoomShieldLanguage();
+		$rules = [
+			[
+				'valid' => $passwd !== null && $passwd !== '' && strlen($passwd) >= 12,
+				'label' => Text::_('COM_JOOMSHIELD_PASSWORD_CRITERIA_LENGTH'),
+			],
+			[
+				'valid' => $passwd !== null && $passwd !== '' && preg_match('/[a-z]/', $passwd) && preg_match('/[A-Z]/', $passwd),
+				'label' => Text::_('COM_JOOMSHIELD_PASSWORD_CRITERIA_CASE'),
+			],
+			[
+				'valid' => $passwd !== null && $passwd !== '' && preg_match('/\d/', $passwd),
+				'label' => Text::_('COM_JOOMSHIELD_PASSWORD_CRITERIA_NUMBER'),
+			],
+			[
+				'valid' => $passwd !== null && $passwd !== '' && preg_match('/[!@#$%^&*?_~()\-]/', $passwd),
+				'label' => Text::_('COM_JOOMSHIELD_PASSWORD_CRITERIA_SPECIAL'),
+			],
+		];
+
+		$items = '';
+		$failedRules = [];
+
+		foreach ($rules as $rule)
+		{
+			if (!$rule['valid'])
+			{
+				$failedRules[] = $rule;
+			}
+		}
+
+		if ($failedRules === [])
+		{
+			$failedRules = $rules;
+		}
+
+		foreach ($failedRules as $rule)
+		{
+			$items .= '<li>' . htmlspecialchars($rule['label'], ENT_QUOTES, 'UTF-8') . '</li>';
+		}
+
+		$title = htmlspecialchars(Text::_('COM_JOOMSHIELD_PLEASE_SELECT_STRONG_PASSWORD'), ENT_QUOTES, 'UTF-8');
+
+		return '<p class="mb-2"><strong>' . $title . '</strong></p><ul class="mb-0 ps-3">' . $items . '</ul>';
 	}
 
 	public static function redirectWithErrorMessage($message)
@@ -1124,54 +1652,111 @@ class JoomShieldUtilities
 		$app->redirect(Route::_('index.php/component/users/?view=registration&Itemid=101'));
 	}
 
-	public static function redirectWithStrongPasswordErrors($redirectUrl = null)
+	public static function redirectWithStrongPasswordErrors($redirectUrl = null, $passwd = null)
 	{
-		self::enqueueStrongPasswordErrors();
+		self::enqueueStrongPasswordErrors($passwd);
 
 		$app = Factory::getApplication();
 		$app->redirect($redirectUrl ?? Route::_('index.php/component/users/?view=registration&Itemid=101'));
 	}
 
-	public static function handleChangePassword($username, $newPasswd, $confirmPasswd, $returnUrl = '')
+	public static function loadJoomShieldLanguage()
+	{
+		$app = Factory::getApplication();
+		$lang = $app->getLanguage();
+		$lang->load('com_joomshield', JPATH_ADMINISTRATOR);
+	}
+
+	private static function loadUserById($userId)
+	{
+		$userId = (int) $userId;
+
+		if ($userId < 1)
+		{
+			return null;
+		}
+
+		if (method_exists(Factory::class, 'getContainer'))
+		{
+			try
+			{
+				$container = Factory::getContainer();
+
+				if ($container && method_exists($container, 'has') && $container->has(UserFactoryInterface::class))
+				{
+					$user = $container->get(UserFactoryInterface::class)->loadUserById($userId);
+
+					if (!empty($user) && (int) $user->id === $userId)
+					{
+						return $user;
+					}
+				}
+			}
+			catch (\Throwable $e)
+			{
+			}
+		}
+
+		$user = Factory::getUser($userId);
+
+		if (empty($user) || (int) $user->id !== $userId)
+		{
+			return null;
+		}
+
+		return $user;
+	}
+
+	private static function getForcedPasswordResetState()
+	{
+		$session = Factory::getApplication()->getSession();
+		$state = $session->get('joomshield.force_password_reset', null);
+
+		if (!is_array($state) || empty($state['username']) || empty($state['user_id']) || empty($state['token']))
+		{
+			return null;
+		}
+
+		$created = (int) ($state['created'] ?? 0);
+
+		if ($created < 1 || (time() - $created) > 900)
+		{
+			self::clearForcedPasswordResetState();
+
+			return null;
+		}
+
+		return $state;
+	}
+
+	private static function clearForcedPasswordResetState()
+	{
+		Factory::getApplication()->getSession()->remove('joomshield.force_password_reset');
+	}
+
+	private static function getPasswordResetLoginUrl($resetState = null)
 	{
 		$app = Factory::getApplication();
 		$root = Uri::root();
-		$redirectUrl = self::sanitizeReturnUrl($returnUrl, $root);
+		$isAdmin = is_array($resetState)
+			? !empty($resetState['is_admin'])
+			: $app->isClient('administrator');
 
-		if ($newPasswd !== $confirmPasswd)
+		if ($isAdmin)
 		{
-			$app->enqueueMessage('Both Passwords do not match', 'error');
-			$app->redirect($redirectUrl);
+			$config = self::getLoginSecurityConfig();
+			$config = is_array($config) ? $config : [];
+			$urlKey = trim((string) ($config['access_lgn_urlky'] ?? ''));
 
-			return;
+			if (!empty($config['enable_custom_admin_login']) && $urlKey !== '')
+			{
+				return $root . 'administrator/?' . $urlKey;
+			}
+
+			return $root . 'administrator';
 		}
 
-		if (self::checkPasswdStrength($newPasswd) !== 'success')
-		{
-			self::enqueueStrongPasswordErrors();
-			$app->redirect($redirectUrl);
-
-			return;
-		}
-
-		$userId = UserHelper::getUserId($username);
-		$salt = UserHelper::genRandomPassword(32);
-		$passwordHash = md5($confirmPasswd . $salt) . ':' . $salt;
-
-		$db = Factory::getDbo();
-		$query = $db->getQuery(true);
-		$fields = [
-			$db->quoteName('password') . ' = ' . $db->quote($passwordHash),
-		];
-		$conditions = [
-			$db->quoteName('id') . ' = ' . $db->quote($userId),
-		];
-		$query->update($db->quoteName('#__users'))->set($fields)->where($conditions);
-		$db->setQuery($query);
-		$db->execute();
-
-		$app->enqueueMessage('You have successfully updated your password', 'success');
-		$app->redirect($redirectUrl);
+		return $root . 'index.php?option=com_users&view=login';
 	}
 
 	private static function getExtensionInstaller()

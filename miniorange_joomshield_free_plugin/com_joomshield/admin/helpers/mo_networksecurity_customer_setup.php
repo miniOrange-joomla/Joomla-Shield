@@ -10,7 +10,6 @@
  * @contact   info@xecurify.com
  */
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Version;
 
 defined('_JEXEC') or die;
@@ -61,20 +60,17 @@ class Joomla_NetworksecurityCustomer
 
 		$fromEmail            = $qEmail;
 		$phpVersion           = phpversion();
-		$currentUser          = Factory::getUser();
 		$jVersion             = new Version;
 		$jCmsVersion          = $jVersion->getShortVersion();
 		$moPluginVersion      = JoomShieldUtilities::getPluginVersion();
 		$osInfo               = JoomShieldUtilities::getOsInfo();
 		$timezoneInfo         = JoomShieldUtilities::getUserTimezoneInfo();
-		$adminEmail           = $currentUser->email;
 
 		$systemInfo           = "Joomla: " . $jCmsVersion . " | PHP: " . $phpVersion . " | Plugin: " . $moPluginVersion . " | OS: " . $osInfo . " | Timezone " . $timezoneInfo;
 		$query                = '[JoomShield Free Plugin]: ' . $query . '<br>' . $systemInfo;
 		$subject              = "Query for miniOrange JoomShield [Free] Plugin  - " . $qEmail;
 		$content             = '<div >Hello, <br><br>
                                 <strong>Company:</strong> <a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br><br>
-                                <strong>Admin Email:</strong> <a href="mailto:' . $adminEmail . '" target="_blank">' . $adminEmail . '</a><br><br>
                                 <strong>Email:</strong> <a href="mailto:' . $qEmail . '" target="_blank">' . $qEmail . '</a><br><br>
                                 <strong>Phone Number:</strong> ' . $qPhone . '<br><br>
                                 <strong>Query:</strong> ' . $query . '</div>';
@@ -88,42 +84,6 @@ class Joomla_NetworksecurityCustomer
 			'fromName'      => 'miniOrange',
 			'toEmail'       => 'joomlasupport@xecurify.com',
 			'toName'        => 'joomlasupport@xecurify.com',
-			'subject'       => $subject,
-			'content'       => $content
-			),
-		);
-
-		return self::sendMail($fields);
-	}
-
-	public static function installationMessage()
-	{
-		$customerKey          = MoNetworkSecurityUtility::getNotifyCustomerKey();
-		$phpVersion           = phpversion();
-		$currentUser          = Factory::getUser();
-		$jVersion             = new Version;
-		$jCmsVersion          = $jVersion->getShortVersion();
-		$moPluginVersion      = JoomShieldUtilities::getPluginVersion();
-		$osInfo               = JoomShieldUtilities::getOsInfo();
-		$timezoneInfo         = JoomShieldUtilities::getUserTimezoneInfo();
-		$email                = $currentUser->email;
-		$systemInfo           = "Joomla: " . $jCmsVersion . " | PHP: " . $phpVersion . " | Plugin: " . $moPluginVersion . " | OS: " . $osInfo . " | Timezone " . $timezoneInfo;
-		$subject = "Installation of JoomShield [Free]";
-		$content = '<div >Hello, <br>
-                        <strong>Company:</strong> <a href="' . $_SERVER['SERVER_NAME'] . '" target="_blank" >' . $_SERVER['SERVER_NAME'] . '</a><br>
-                        <strong>Admin Email:</strong> <a href="mailto:' . $email . '" target="_blank">' . $email . '</a><br>
-                        <strong>System Info:</strong> ' . $systemInfo . '</div>';
-
-		$fields = array(
-		'customerKey'    => $customerKey,
-		'sendEmail'     => true,
-		'email'         => array(
-			'customerKey'   => $customerKey,
-			'fromEmail'     => 'joomlasupport@xecurify.com',
-			'fromName'      => 'miniOrange',
-			'toEmail'       => 'nutan.barad@xecurify.com',
-			'toName'        => 'nutan.barad@xecurify.com',
-			'bccEmail'      => 'nikhil.bhot@xecurify.com',
 			'subject'       => $subject,
 			'content'       => $content
 			),

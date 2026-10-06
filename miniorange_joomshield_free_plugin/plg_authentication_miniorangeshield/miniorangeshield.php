@@ -10,10 +10,13 @@
  * @contact   info@xecurify.com
  */
 
+use Joomla\CMS\Event\User\AfterLoginEvent;
+use Joomla\CMS\Event\User\AuthenticationEvent;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\User\UserHelper;
+
 defined('_JEXEC') or die;
 
 if (defined('_JEXEC'))
@@ -22,16 +25,20 @@ if (defined('_JEXEC'))
 	{
 		public function onUserAfterLogin($options)
 		{
-			$object = $options['user'];
+			if (class_exists(AfterLoginEvent::class) && $options instanceof AfterLoginEvent)
+			{
+				$options = $options->getOptions();
+			}
 
-			$array = (array) $object;
-			$username = $array['username'];
+			$object = $options['user'] ?? null;
+			$array = is_object($object) ? (array) $object : [];
+			$username = $array['username'] ?? '';
 
 			jimport('miniorangejoomshieldplugin.utility.JoomShieldUtilities');
 
-			$userIpAddress = JoomShieldUtilities::getClientIp();
+			JoomShieldUtilities::blockWeakPasswordAfterLogin($options);
 
-			// JoomShieldUtilities::updateTransactionTable($userIpAddress);
+			$userIpAddress = JoomShieldUtilities::getClientIp();
 			$requestedUri = JoomShieldUtilities::getLoginRequestUrl();
 
 			if (strpos($requestedUri, 'administrator') !== false)
@@ -43,11 +50,8 @@ if (defined('_JEXEC'))
 				$isadmin = 'End user login page';
 			}
 
-			// Some customer are facing some environment issue due to below call. Will fix this soon.
-			// $countryName = JoomShieldUtilities::getCountryName($userIpAddress);
 			$countryName = "";
 			$browserName = JoomShieldUtilities::getCurrentUserBrowser();
-
 			$os = JoomShieldUtilities::getOsInfo();
 
 			JoomShieldUtilities::addTransactionDetails($userIpAddress, $username, 'User Login', 'success', $requestedUri);
@@ -64,82 +68,44 @@ if (defined('_JEXEC'))
 			);
 		}
 
-		public function onUserAuthenticate($credentials, $options, &$response)
+		public function onUserAuthenticate($credentials, $options = [], &$response = null)
 		{
+			jimport('miniorangejoomshieldplugin.utility.JoomShieldUtilities');
+
+			if (class_exists(AuthenticationEvent::class) && $credentials instanceof AuthenticationEvent)
+			{
+				$event = $credentials;
+				$credentials = $event->getCredentials();
+				$options = $event->getOptions();
+				$response = $event->getAuthenticationResponse();
+			}
+
+			JoomShieldUtilities::enforceStrongPasswordLogin($credentials, $options);
+
 			$username = $credentials['username'] ?? '';
 			$password = $credentials['password'] ?? '';
-
 			$result = JoomShieldUtilities::getUserCredentials($username);
-
 			$requestedUri = JoomShieldUtilities::getLoginRequestUrl();
-
-			if (str_contains($requestedUri, 'administrator'))
-			{
-				$isAdmin = true;
-			}
-			else
-			{
-				$isAdmin = false;
-			}
-
-			// For handling Customized admin url on wrong credentials.
+			$isAdmin = str_contains($requestedUri, 'administrator');
 			$config = JoomShieldUtilities::getLoginSecurityConfig();
-			$loginUrlKey = $config['access_lgn_urlky'] ?? '';
+			$loginUrlKey = is_array($config) ? ($config['access_lgn_urlky'] ?? '') : '';
 			$baseUrl = Uri::root();
 			$currentAdminLoginUrl = $baseUrl . 'administrator';
 			$customAdminLoginUrl = $currentAdminLoginUrl . '/?' . $loginUrlKey;
 			$msg = Text::_('JGLOBAL_AUTH_INVALID_PASS');
 
-			if ($result != null)
+			if ($result !== null)
 			{
 				$match = UserHelper::verifyPassword($password, $result->password, $result->id);
 
-				if ($match == true)
-				{
-					$configResult = JoomShieldUtilities::getLoginSecurityConfig();
-					$enforceStrongPasswd = $configResult['enforce_strong_password_login'] ?? 0;
-
-					if ($enforceStrongPasswd)
-					{
-						$status = JoomShieldUtilities::checkPasswdStrength($password);
-
-						if ($status == 'false')
-						{
-							$returnUrl = $requestedUri;
-
-							if ($isAdmin)
-							{
-								$customAdminEnabled = $config['enable_custom_admin_login'] ?? 0;
-
-								if ($customAdminEnabled)
-								{
-									$returnUrl = $customAdminLoginUrl;
-								}
-								else
-								{
-									$returnUrl = $currentAdminLoginUrl;
-								}
-							}
-
-							include __DIR__ . '/includes/change-password.php';
-							exit();
-						}
-					}
-				}
-				else
-				{
-					if ($isAdmin)
-					{
-						JoomShieldUtilities::customRedirectUrl($customAdminLoginUrl, $msg, 'warning');
-					}
-				}
-			}
-			else
-			{
-				if ($isAdmin)
+				if ($match !== true && $isAdmin)
 				{
 					JoomShieldUtilities::customRedirectUrl($customAdminLoginUrl, $msg, 'warning');
 				}
+			}
+			elseif ($isAdmin)
+			{
+				JoomShieldUtilities::customRedirectUrl($customAdminLoginUrl, $msg, 'warning');
 			}
 		}
 	}

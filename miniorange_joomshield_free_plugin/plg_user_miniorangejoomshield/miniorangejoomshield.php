@@ -12,13 +12,16 @@
 
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Event\User\LoginEvent;
 use Joomla\CMS\Event\User\LoginFailureEvent;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\User\UserHelper;
 
 // No direct access
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.plugin.plugin');
 jimport('miniorangejoomshieldplugin.utility.JoomShieldUtilities');
-
+jimport('miniorangejoomshieldplugin.utility.JoomShieldTempAdmin');
 
 if (defined('_JEXEC'))
 {
@@ -104,20 +107,32 @@ if (defined('_JEXEC'))
 		}
 
 
-		public function onUserBeforeSave()
+		public function onUserBeforeSave($user, $isNew, $data = [])
 		{
+			Factory::getLanguage()->load('com_joomshield', JPATH_ADMINISTRATOR);
+
+			if (JoomShieldTempAdmin::isCurrentUserTemporary())
+			{
+				$messageKey = $isNew
+					? 'COM_JOOMSHIELD_TEMP_ADMIN_USER_CREATE_DENIED'
+					: 'COM_JOOMSHIELD_TEMP_ADMIN_USER_EDIT_DENIED';
+				Factory::getApplication()->enqueueMessage(Text::_($messageKey), 'error');
+
+				return false;
+			}
+
 			$post = Factory::getApplication()->input->post->getArray();
 			$config = JoomShieldUtilities::getRegisterSecurityConfig();
 			$isEnforceStrongPasswd = $config['enforce_strong_password_register'] ?? 0;
 
-			if ($isEnforceStrongPasswd)
+			if ($isEnforceStrongPasswd && array_key_exists('password1', $post['jform'] ?? []))
 			{
-				$passwd = $post['jform']['password1'] ?? null;
+				$passwd = $post['jform']['password1'] ?? '';
 				$isValidPasswd = JoomShieldUtilities::checkPasswdStrength($passwd);
 
 				if ($isValidPasswd === 'false')
 				{
-					JoomShieldUtilities::redirectWithStrongPasswordErrors();
+					JoomShieldUtilities::redirectWithStrongPasswordErrors(null, $passwd);
 				}
 			}
 
@@ -134,6 +149,54 @@ if (defined('_JEXEC'))
 					JoomShieldUtilities::redirectWithErrorMessage($message);
 				}
 			}
+		}
+
+		public function onUserBeforeDelete($user)
+		{
+			JoomShieldTempAdmin::denyUserDelete();
+
+			return true;
+		}
+
+		public function onUserLogin($user, $options = [])
+		{
+			if (class_exists(LoginEvent::class) && $user instanceof LoginEvent)
+			{
+				$options = $user->getOptions();
+				$user = $user->getAuthenticationResponse();
+			}
+
+			JoomShieldTempAdmin::expireDueUsers();
+			$username = is_array($user) ? ($user['username'] ?? '') : '';
+
+			if ($username === '')
+			{
+				return true;
+			}
+
+			$userId = UserHelper::getUserId($username);
+
+			if ($userId && JoomShieldTempAdmin::isTemporaryUserId($userId) && !JoomShieldTempAdmin::getActiveRecord($userId))
+			{
+				return false;
+			}
+
+			$resetUser = JoomShieldUtilities::getForcedPasswordResetUser(null, $options);
+
+			if ($resetUser !== null)
+			{
+				try
+				{
+					Factory::getApplication()->logout((int) $resetUser->id);
+				}
+				catch (\Throwable $e)
+				{
+				}
+
+				JoomShieldUtilities::beginForcedPasswordReset($resetUser->username, (int) $resetUser->id);
+			}
+
+			return true;
 		}
 	}
 }

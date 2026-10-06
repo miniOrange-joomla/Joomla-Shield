@@ -124,6 +124,8 @@ if (!empty($joomShieldWarnings))
 <?php echo $joomShieldWarningsHtml; ?>
 	<div class="mo_boot_row mo_boot_p-2 mo_boot_mb-2">
 		<div class="mo_boot_col-sm-12 mo_boot_d-flex mo_js_justify_content_end mo_js_gap-12 mo_js_align_items_center">
+			<a href="https://plugins.miniorange.com/configure-joomshield-joomla"
+			   class="mo_boot_mt-1 mo_websecurity_btn" target="_blank" rel="noopener noreferrer"><strong><?php echo Text::_('COM_JOOMSHIELD_SETUP_GUIDE'); ?></strong></a>
 			<a href="<?php echo Uri::base(); ?>index.php?option=com_joomshield&tab=import_export"
 			   class="mo_boot_mt-1 mo_websecurity_btn"><strong><?php echo Text::_('COM_JOOMSHIELD_IMPORT_EXPORT'); ?></strong></a>
 			<a href="<?php echo Uri::base(); ?>index.php?option=com_joomshield&tab=support"
@@ -131,10 +133,16 @@ if (!empty($joomShieldWarnings))
 		</div>
 	</div>
 
+	<?php AdminSecurity::renderFeatureAccessBanner($shieldActiveTab); ?>
+
 	<div class="mo_boot_container-fluid mo_boot_websecurity-container">
 		<div class="mo_boot_row">
 			<div class="mo_boot_col-sm-2 mo_boot_websecurity-row mo_boot_px-0">
 				<div class="mo_boot_row">
+					<div onclick="mo_show_tab('websecurity_tab_1')" style="<?php echo ($shieldActiveTab === 'admin_security') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_1" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
+						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB_ADMIN_SECURITY'); ?></strong>
+					</div>
+
 					<div onclick="mo_show_tab('websecurity_tab_2')" style="<?php echo ($shieldActiveTab == 'login_security') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_2" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
 						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB2_LOGIN_SECURITY'); ?></strong>
 					</div>
@@ -155,26 +163,32 @@ if (!empty($joomShieldWarnings))
 						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB5_ADVANCED_BLOCKING'); ?></strong>
 					</div>
 
-					<div onclick="mo_show_tab('websecurity_tab_7')" style="<?php echo ($shieldActiveTab == 'db_backup') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_7" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
-						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB6_DB_BACKUP'); ?></strong>
+					<div onclick="mo_show_tab('websecurity_tab_10')" style="<?php echo ($shieldActiveTab == 'advanced_features') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_10" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
+						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB8_ADVANCED_FEATURES'); ?></strong>
+					</div>
+
+					<div onclick="mo_show_tab('websecurity_tab_13')" style="<?php echo ($shieldActiveTab == 'nginx_rules') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_13" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
+						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB_NGINX_RULES'); ?></strong>
 					</div>
 
 					<div onclick="mo_show_tab('websecurity_tab_8')" style="<?php echo ($shieldActiveTab == 'email_notifications') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_8" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
-						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB7_NOTIFICATIONS'); ?></strong>
+						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB7_NOTIFICATIONS'); ?> <sup class="mo_js_premium_crown"><a href="index.php?option=com_joomshield&tab=license_plans" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>"><img src="<?php echo Uri::base(); ?>components/com_joomshield/assets/images/premium_crown.png" alt="<?php echo htmlspecialchars(Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'), ENT_QUOTES, 'UTF-8'); ?>" class="mo_js_premium_crown_img"><span class="mo_js_premium_tooltip"><?php echo Text::_('COM_JOOMSHIELD_AVAILABLE_IN_PREMIUM_PLAN'); ?></span></a></sup></strong>
 					</div>
 
 					<div onclick="mo_show_tab('websecurity_tab_11')" style="<?php echo ($shieldActiveTab == 'license_plans') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_11" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
 						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB9_LICENSE_PLANS'); ?></strong>
-					</div>
-
-					<div onclick="mo_show_tab('websecurity_tab_10')" style="<?php echo ($shieldActiveTab == 'advanced_features') ? 'background:white;color:black' : 'background:none;color:white;'; ?>" id="mo_websecurity_tab_10" class="mini_websecurity_tab mo_boot_col-sm-12 mo_boot_p-3 mo_boot_border-1 mo_boot_websecurity-tab">
-						<strong class="mo_jnsp_tab"><?php echo Text::_('COM_JOOMSHIELD_TAB8_ADVANCED_FEATURES'); ?></strong>
 					</div>
 				</div>
 			</div>
 
 			<div class="mo_boot_col-sm-10">
 				<div class="mo_boot_row">
+					<div class="mo_boot_col-sm-12 mo_websecurity_tab" id="websecurity_tab_1" style="<?php echo (($shieldActiveTab === 'admin_security') ? 'display:block;' : 'display:none;'); ?>">
+						<div class="mo_boot_row mo_boot_m-2">
+							<?php AdminSecurity::render(); ?>
+						</div>
+					</div>
+
 					<div class="mo_boot_col-sm-12 mo_websecurity_tab" id="websecurity_tab_2" style="<?php echo (($shieldActiveTab == 'login_security') ? 'display:block;' : 'display:none;'); ?>">
 							<?php
 							LoginSecurity::moNetworksecurityLoginSecurityForm();
@@ -213,14 +227,6 @@ if (!empty($joomShieldWarnings))
 						</div>
 					</div>
 
-					<div class="mo_boot_col-sm-12 mo_websecurity_tab" id="websecurity_tab_7" style="<?php echo (($shieldActiveTab == 'db_backup') ? 'display:block;' : 'display:none;'); ?>">
-						<div class="mo_boot_row mo_boot_m-2">
-							<?php
-							DB_Backup::moNetworksecurityDbBackupForm();
-							?>
-						</div>
-					</div>
-
 					<div class="mo_boot_col-sm-12 mo_websecurity_tab" id="websecurity_tab_8" style="<?php echo (($shieldActiveTab == 'email_notifications') ? 'display:block;' : 'display:none;'); ?>">
 						<div class="mo_boot_row mo_boot_m-2">
 							<?php
@@ -233,6 +239,14 @@ if (!empty($joomShieldWarnings))
 						<div class="mo_boot_row mo_boot_m-2">
 							<?php
 							AdvancedFeatures::moNetworksecurityAdvancedFeatures();
+							?>
+						</div>
+					</div>
+
+					<div class="mo_boot_col-sm-12 mo_websecurity_tab" id="websecurity_tab_13" style="<?php echo (($shieldActiveTab == 'nginx_rules') ? 'display:block;' : 'display:none;'); ?>">
+						<div class="mo_boot_row mo_boot_m-2">
+							<?php
+							NginxRules::moNetworksecurityNginxRules();
 							?>
 						</div>
 					</div>

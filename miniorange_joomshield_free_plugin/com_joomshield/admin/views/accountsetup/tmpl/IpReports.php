@@ -53,6 +53,7 @@ class IpReports
 				</div>
 				<div class="mo_boot_col-sm-8 mo_boot_text-right">
 					<form name="mo_ip_login" method="post" id="jnsp_clear_values" action="<?php echo Route::_('index.php?option=com_joomshield&task=moipblocking.clearReports'); ?>">
+						<?php echo HTMLHelper::_('form.token'); ?>
 						<div class="mo_boot_row">
 							<div class="mo_boot_col-sm-12 mo_boot_px-0">
 								<input type="submit" name="refresh_page" class="mo_websecurity_btn"  value="<?php echo Text::_('COM_JOOMSHIELD_REFRESH_PAGE'); ?>">
